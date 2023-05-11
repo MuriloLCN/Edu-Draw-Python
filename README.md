@@ -65,6 +65,110 @@ s.start(setup, draw, "My cool window")
 
 And now you're ready to get onto some drawings :D
 
+## Getting started (with a simple example)
+
+Now that you have your canvas ready for the show, it's time to actually draw something on the screen. To begin with,let's draw a circle on the screen with a white background. Our code might look something like this:
+
+```
+from simpledraw import SimpleDraw
+
+s = SimpleDraw(500, 300)
+
+def setup():
+    pass
+
+def draw():
+    s.background((255, 255, 255))
+    s.circle_mode('TOP_LEFT')
+    s.circle(s.width // 2, s.height // 2, 24)
+
+s.start(setup, draw, "My first drawing")
+```
+
+And our canvas looks like this:
+
+![img1](https://github.com/MuriloLCN/Simple-Draw-Python/assets/88753590/dc3842ec-77dc-49c8-905e-0f390d3244b2)
+
+
+That's our circle! But this is not very interesting, so let's give it a red filling color, a blue outline and make it move around.
+
+```
+from simpledraw import SimpleDraw
+
+s = SimpleDraw(500, 300)
+
+
+def setup():
+    pass
+
+
+velocity = 5
+ball_position = [50, 50]
+
+
+def draw():
+    global ball_position
+    s.background((255, 255, 255))
+    s.circle_mode('TOP_LEFT')
+    s.fill((255, 0, 0))
+    s.stroke((0, 0, 255))
+    ball_position[0] += velocity
+    ball_position[1] += velocity
+
+    s.circle(ball_position[0], ball_position[1], 24)
+
+s.start(setup, draw, "My first drawing")
+```
+
+![img2](https://github.com/MuriloLCN/Simple-Draw-Python/assets/88753590/68290917-f98a-4593-9545-4be919130673)
+
+
+Now we have a moving red ball :D, but it leaves the screen fairly quickly, so let's make it bounce around.
+
+```
+from simpledraw import SimpleDraw
+
+s = SimpleDraw(500, 300)
+
+width, height = 0, 0
+velocity = [5, 5]
+ball_position = [50, 50]
+
+
+def setup():
+    global width, height
+    width = s.width
+    height = s.height
+
+
+def draw():
+    global ball_position, velocity
+    s.background((255, 255, 255))
+    s.circle_mode('CENTER')
+    s.fill((255, 0, 0))
+    s.stroke((0, 0, 255))
+
+    if ball_position[1] < 0 or ball_position[1] + 42 > height:
+        velocity[1] *= -1
+
+    if ball_position[0] < 0 or ball_position[0] + 42 > width:
+        velocity[0] *= -1
+
+    ball_position[0] += velocity[0]
+    ball_position[1] += velocity[1]
+
+    s.circle(ball_position[0], ball_position[1], 24)
+
+
+s.start(setup, draw, "My first drawing")
+```
+
+![bouncing_ball](https://github.com/MuriloLCN/Simple-Draw-Python/assets/88753590/95d0c5fa-d95f-4fd7-8878-072f8d9e5b45)
+
+And just like that, we've got a ball that bounces around like a DVD screensaver (I wonder when it'll hit the corners...), you should try for yourself.
+
+This example was just to give you an idea of how you can work with this interface, and there is so much you can do with this, it's all up to you.
+
 # Documentation
 
 ## State methods
