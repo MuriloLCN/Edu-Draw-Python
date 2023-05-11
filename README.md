@@ -87,7 +87,8 @@ s.start(setup, draw, "My first drawing")
 
 And our canvas looks like this:
 
-![img1](https://github.com/MuriloLCN/Simple-Draw-Python/assets/88753590/dc3842ec-77dc-49c8-905e-0f390d3244b2)
+
+![img1](https://github.com/MuriloLCN/Simple-Draw-Python/assets/88753590/b6ec2e1f-9b75-4c02-88fc-d66ef73c6909)
 
 
 That's our circle! But this is not very interesting, so let's give it a red filling color, a blue outline and make it move around.
@@ -120,7 +121,7 @@ def draw():
 s.start(setup, draw, "My first drawing")
 ```
 
-![img2](https://github.com/MuriloLCN/Simple-Draw-Python/assets/88753590/68290917-f98a-4593-9545-4be919130673)
+![img2](https://github.com/MuriloLCN/Simple-Draw-Python/assets/88753590/b780f016-ef8f-4f66-8d29-120736602985)
 
 
 Now we have a moving red ball :D, but it leaves the screen fairly quickly, so let's make it bounce around.
@@ -163,7 +164,8 @@ def draw():
 s.start(setup, draw, "My first drawing")
 ```
 
-![bouncing_ball](https://github.com/MuriloLCN/Simple-Draw-Python/assets/88753590/95d0c5fa-d95f-4fd7-8878-072f8d9e5b45)
+![bouncing_ball](https://github.com/MuriloLCN/Simple-Draw-Python/assets/88753590/7ff0d89d-95c0-4cab-bd57-13fa8cee4f47)
+
 
 And just like that, we've got a ball that bounces around like a DVD screensaver (I wonder when it'll hit the corners...), you should try for yourself.
 
