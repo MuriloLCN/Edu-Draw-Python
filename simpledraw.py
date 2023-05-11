@@ -893,6 +893,9 @@ class SimpleDraw:
             # y -= target_height
             img = ImageOps.flip(img)
 
+        target_width = int(target_width)
+        target_height = int(target_height)
+
         img = img.resize((target_width, target_height))
         img = img.rotate(-data.cumulative_rotation_angle, expand=True)
 
