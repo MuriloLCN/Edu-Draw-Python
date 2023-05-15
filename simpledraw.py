@@ -488,13 +488,14 @@ class SimpleDraw:
 
         data = self._get_data_object()
 
-        if not data.account_for_transformations:
-            if not self.null_mode:
-                return pygame.mouse.get_pos()
-            else:
-                return 0, 0
+        if self.null_mode:
+            return 0, 0
 
         original_pos = pygame.mouse.get_pos()
+
+        if not data.account_for_transformations:
+            return original_pos
+
         final_pos = self._undo_transformations_coords(original_pos[0], original_pos[1])
         return int(final_pos[0]), int(final_pos[1])
 
