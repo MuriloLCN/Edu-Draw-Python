@@ -51,7 +51,7 @@ You need to pass the ```setup()``` and ```draw()``` functions you made, and also
 The general structure of your form code may look something like this:
 
 ```
-from EduDraw import EduDraw
+from eduraw import EduDraw
 
 def setup():
     # Setting up goes here...
@@ -70,7 +70,7 @@ And now you're ready to get onto some drawings :D
 Now that you have your canvas ready for the show, it's time to actually draw something on the screen. To begin with,let's draw a circle on the screen with a white background. Our code might look something like this:
 
 ```
-from EduDraw import EduDraw
+from edudraw import EduDraw
 
 s = EduDraw(500, 300)
 
@@ -94,7 +94,7 @@ And our canvas looks like this:
 That's our circle! But this is not very interesting, so let's give it a red filling color, a blue outline and make it move around.
 
 ```
-from EduDraw import EduDraw
+from edudraw import EduDraw
 
 s = EduDraw(500, 300)
 
@@ -127,7 +127,7 @@ s.start(setup, draw, "My first drawing")
 Now we have a moving red ball :D, but it leaves the screen fairly quickly, so let's make it bounce around.
 
 ```
-from EduDraw import EduDraw
+from edudraw import EduDraw
 
 s = EduDraw(500, 300)
 
