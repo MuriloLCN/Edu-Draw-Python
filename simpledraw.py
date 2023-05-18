@@ -113,7 +113,7 @@ class _ControlClass:
                 self.run(self.mouse_wheel, event.__dict__)
 
 
-class SimpleDraw:
+class EduDraw:
     def __init__(self, width: int, height: int, null_mode: bool = False):
         self.width = width
         self.height = height
@@ -694,7 +694,7 @@ class SimpleDraw:
         :param fast_mode: Whether fast mode should be used. Default: True.
 
         Note: Fast mode simply draws a rectangle
-        that fills the entire image, disabling it will cause SimpleDraw.clear() to be called which is more costly
+        that fills the entire image, disabling it will cause EduDraw.clear() to be called which is more costly
         in terms of processing.
         """
 
@@ -981,7 +981,7 @@ class SimpleDraw:
 
     def frame_rate(self, fps: int):
         """
-        Sets the desired frame rate. Note that SimpleDraw using python is slower than it's C# counterpart.
+        Sets the desired frame rate. Note that EduDraw using python is slower than it's C# counterpart.
         :param fps: The desired FPS rate.
         """
         self.deltatime = 1000 / fps
