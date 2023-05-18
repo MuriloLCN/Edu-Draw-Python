@@ -1,6 +1,6 @@
 # Edu-Draw-Python
 
-This is the Python version of EduDraw, for the C# version, please see [Simple Draw C#](https://github.com/MuriloLCN/Simple-Draw-Csharp)
+This is the Python version of EduDraw, for the C# version, please see [Edu Draw C#](https://github.com/MuriloLCN/Simple-Draw-Csharp)
 
 This project is aimed to provide an interface that allows for a simplified experience when using basic 2D graphics in the Python language. 
 
