@@ -1,6 +1,6 @@
-# Simple-Draw-Python
+# Edu-Draw-Python
 
-This is the Python version of Simple Draw, for the C# version, please see [Simple Draw C#](https://github.com/MuriloLCN/Simple-Draw-Csharp)
+This is the Python version of EduDraw, for the C# version, please see [Simple Draw C#](https://github.com/MuriloLCN/Simple-Draw-Csharp)
 
 This project is aimed to provide an interface that allows for a simplified experience when using basic 2D graphics in the Python language. 
 
@@ -10,11 +10,11 @@ The details of installation and documentation of the respective versions are bel
 
 ## Installation
 
-In order to use the Python version you can simply download the ```simpledraw.py``` and import it in your code like any other library. You'll also need the requirements, which can be installed from the ```requirements.txt``` file.
+In order to use the Python version you can simply download the ```edudraw.py``` and import it in your code like any other library. You'll also need the requirements, which can be installed from the ```requirements.txt``` file.
 
 ## Setting up
 
-In order to begin using the SimpleDraw class to make your drawings, you need to do a few steps first:
+In order to begin using the EduDraw class to make your drawings, you need to do a few steps first:
   
 #### 1. Install the requirements
 
@@ -26,16 +26,16 @@ You need to install the requirements from the requirements file, you can do this
 
 You can do this by adding this to your imports:
 
-    from simpledraw import SimpleDraw
+    from edudraw import EduDraw
 
 Make sure the file is in the same directory as the file from which you are using it from or that you properly add the path otherwise.
 
-#### 3. Create an instance of the SimpleDraw class
+#### 3. Create an instance of the EduDraw class
   
-This can be done by simply creating a new SimpleDraw instance like this:
+This can be done by simply creating a new EduDraw instance like this:
     
     width, height = 500, 500  # Any size you want
-    s = SimpleDraw(width, height)
+    s = EduDraw(width, height)
     
 #### 4. Create a ```setup()``` and a ```draw()``` function
 
@@ -45,13 +45,13 @@ These functions are the core of your drawing. ```setup()``` runs once and before
 
 #### 5. Call ```s.start(setup, draw, window_title)``` 
  
-Once you run this method on the instance you made for the SimpleDraw class, the simulation will start and keep running until you give it a halt command or close the window.
+Once you run this method on the instance you made for the EduDraw class, the simulation will start and keep running until you give it a halt command or close the window.
 You need to pass the ```setup()``` and ```draw()``` functions you made, and also a ```window_title``` to give the running window a name.
 
 The general structure of your form code may look something like this:
 
 ```
-from simpledraw import SimpleDraw
+from EduDraw import EduDraw
 
 def setup():
     # Setting up goes here...
@@ -59,7 +59,7 @@ def setup():
 def draw():
     # Drawing goes here...
 
-s = SimpleDraw(500, 500)
+s = EduDraw(500, 500)
 s.start(setup, draw, "My cool window")
 ```
 
@@ -70,9 +70,9 @@ And now you're ready to get onto some drawings :D
 Now that you have your canvas ready for the show, it's time to actually draw something on the screen. To begin with,let's draw a circle on the screen with a white background. Our code might look something like this:
 
 ```
-from simpledraw import SimpleDraw
+from EduDraw import EduDraw
 
-s = SimpleDraw(500, 300)
+s = EduDraw(500, 300)
 
 def setup():
     pass
@@ -94,9 +94,9 @@ And our canvas looks like this:
 That's our circle! But this is not very interesting, so let's give it a red filling color, a blue outline and make it move around.
 
 ```
-from simpledraw import SimpleDraw
+from EduDraw import EduDraw
 
-s = SimpleDraw(500, 300)
+s = EduDraw(500, 300)
 
 
 def setup():
@@ -127,9 +127,9 @@ s.start(setup, draw, "My first drawing")
 Now we have a moving red ball :D, but it leaves the screen fairly quickly, so let's make it bounce around.
 
 ```
-from simpledraw import SimpleDraw
+from EduDraw import EduDraw
 
-s = SimpleDraw(500, 300)
+s = EduDraw(500, 300)
 
 width, height = 0, 0
 velocity = [5, 5]
@@ -177,9 +177,9 @@ This example was just to give you an idea of how you can work with this interfac
 
 These methods don't directly draw onto the screen, but rather control aspects of the simulation.
 
-### SimpleDraw(width: int, height: int, null_mode: bool = False)
+### EduDraw(width: int, height: int, null_mode: bool = False)
 
-Initializer for the SimpleDraw class.
+Initializer for the EduDraw class.
 
 Parameters:
 
@@ -187,9 +187,9 @@ width, height: The width and height of the window to be created
 
 null_mode: Whether null mode should be used or not. Default: False. See more about null mode at the end.
 
-Returns a new instance of the SimpleDraw class.
+Returns a new instance of the EduDraw class.
 
-### SimpleDraw.start(setup, draw, window_title: str)
+### EduDraw.start(setup, draw, window_title: str)
 
 Starts the simulation.
 
@@ -201,7 +201,7 @@ draw: The draw() function written by the user
 
 window_title: A string to be used as a title for the window running the simulation.
 
-### SimpleDraw.rect_mode(mode: str)
+### EduDraw.rect_mode(mode: str)
 
 Changes the current mode for drawing squares, rectangles and images.
 
@@ -232,7 +232,7 @@ Example:
 ![rectmode](https://user-images.githubusercontent.com/88753590/233815069-b4ab097a-52f3-4475-967c-9c4a65fa881c.png)
 
 
-### SimpleDraw.circle_mode(mode: str)
+### EduDraw.circle_mode(mode: str)
 
 Changes the current mode for drawing circles and ellipses.
 
@@ -278,7 +278,7 @@ def draw():
 
 ---
 
-### SimpleDraw.fill(color: tuple)
+### EduDraw.fill(color: tuple)
 
 Makes all shapes drawn after this call to be filled in with a given color.
 
@@ -302,11 +302,11 @@ Example:
 
 ![fill](https://user-images.githubusercontent.com/88753590/233815075-ed143b96-8cae-4f8d-ba53-338467a036d9.png)
 
-### SimpleDraw.no_fill()
+### EduDraw.no_fill()
 
 Makes all shapes drawn after this call to not be filled in.
 
-### SimpleDraw.change_font(font: PIL.ImageFont)
+### EduDraw.change_font(font: PIL.ImageFont)
 
 Changes the font used in the canvas. If temp state is on, it will change the temporary font only.
 
@@ -314,7 +314,7 @@ Parameters:
 
 font: A PIL.ImageFont instance to be used on the simulation
 
-### SimpleDraw.stroke(color: tuple)
+### EduDraw.stroke(color: tuple)
 
 Makes all shapes drawn after this call to have their outlines drawn with a given color.
 
@@ -342,11 +342,11 @@ def draw():
 
 ![stroke](https://user-images.githubusercontent.com/88753590/233815081-9336437f-1eb6-41d9-81a2-15ecfcc8d0b4.png)
 
-### SimpleDraw.no_stroke()
+### EduDraw.no_stroke()
 
 Makes all subsequent shapes not have their outlines drawn. 
 
-### SimpleDraw.stroke_weight(new_weight: int)
+### EduDraw.stroke_weight(new_weight: int)
 
 Changes how thick or thin the stroke lines are, smaller numbers means thinner outlines, bigger numbers mean thicker outlines.
 
@@ -375,11 +375,11 @@ def draw():
 ![strokeweight](https://user-images.githubusercontent.com/88753590/233815088-a628b74a-5d95-4188-bcd0-14c96c4ac359.png)
 
 
-### SimpleDraw.push() 
+### EduDraw.push() 
 
 Toggles the temporary state on. All color, font and weight changes made while this mode is on will be reverted once it is left.
 
-### SimpleDraw.pop()
+### EduDraw.pop()
 
 Toggles the temporary state off.
 
@@ -446,7 +446,7 @@ Example 2:
 
 
 
-### SimpleDraw.mouse_pos()-> tuple
+### EduDraw.mouse_pos()-> tuple
 
 Gets the current mouse position (relative to the top left corner of the canvas).
 Returns a tuple with the X,Y position of the cursor.
@@ -480,7 +480,7 @@ def draw():
 ![mousepos](https://user-images.githubusercontent.com/88753590/233815197-3eb81842-bb44-4e51-95ad-f4e4ffe52be4.gif)
 
 You can set whether this function should or not revert transformations to retrieve the perceived position by using
-`SimpleDraw.set_account_for_transformations(True)`, the example below illustrates the difference:
+`EduDraw.set_account_for_transformations(True)`, the example below illustrates the difference:
 
 Example 2:
 ```
@@ -516,7 +516,7 @@ Example 2:
 ![mouseaccount](https://user-images.githubusercontent.com/88753590/236652900-93e10e80-1e5a-4c06-8db6-00b7f9afd7bd.gif)
 
 
-### SimpleDraw.rotate(angle: int)
+### EduDraw.rotate(angle: int)
 
 Rotates the drawing clockwise by the defined amount of degrees.
 Note: Is cumulative with other rotations.
@@ -560,7 +560,7 @@ def draw():
 ![rotation](https://user-images.githubusercontent.com/88753590/236652911-7dba1539-0b43-468c-a1ba-d707c20a8730.png)
 
 
-### SimpleDraw.scale(scale_x: float, scale_y: float) 
+### EduDraw.scale(scale_x: float, scale_y: float) 
 
 Scales the drawing's axis by the desired multipliers
 Note: Is cumulative with other scalars.
@@ -598,7 +598,7 @@ Example:
 ![scale](https://user-images.githubusercontent.com/88753590/236652949-f882daf2-fba5-4cd4-8e62-5d418b3fbfee.png)
 
 
-### SimpleDraw.translate(translate_x: int, translate_y: int)
+### EduDraw.translate(translate_x: int, translate_y: int)
 
 Changes the origin of the plane of drawing.
 Note: Is cumulative with other translations.
@@ -624,15 +624,15 @@ def draw():
 ![translate](https://user-images.githubusercontent.com/88753590/236652958-1b89304d-9cb0-4104-9806-82dc0c8e9f3c.png)
 
 
-### SimpleDraw.reset_transformations()
+### EduDraw.reset_transformations()
 
 Resets all transformations applied.
 
-### SimpleDraw.reset_scaling() 
+### EduDraw.reset_scaling() 
 
 Resets all scaling transformations applied.
 
-### SimpleDraw.reset_translation() 
+### EduDraw.reset_translation() 
 
 Resets all translation transformations applied.
 
@@ -669,11 +669,11 @@ def draw():
 
 
 
-### SimpleDraw.reset_rotation() 
+### EduDraw.reset_rotation() 
 
 Resets all rotation transformations applied.
 
-### SimpleDraw.set_account_for_transformations(state: bool) 
+### EduDraw.set_account_for_transformations(state: bool) 
 
 Changes wether `mouse_pos()` should yield the real or perceived position of the mouse.
 
@@ -681,7 +681,7 @@ Parameters:
 
 state: The state to apply to this setting. `True` yields the perceived position, whereas `False` (the default) yields the real position.
 
-### SimpleDraw.set_controls(key_down=None, key_up=None, mouse_motion=None, mouse_button_up=None, mouse_button_down=None, mouse_wheel=None)
+### EduDraw.set_controls(key_down=None, key_up=None, mouse_motion=None, mouse_button_up=None, mouse_button_down=None, mouse_wheel=None)
 
 Sets functions to be ran on each specific Pygame event. `None` means that nothing will occur on those events.
 Each function must have a parameter to receive a dictionary containing the data related to that event (such
@@ -704,7 +704,7 @@ mouse_wheel: The function to be ran when the mouse wheel is scrolled
 Example:
 
 ```
-s = SimpleDraw(400, 400)
+s = EduDraw(400, 400)
 
 bg_color = (200, 200, 200)
 text = ''
@@ -757,7 +757,7 @@ def get_char(data: dict):
 
 These methods draw onto the canvas.
 
-### SimpleDraw.point(x: int, y: int)
+### EduDraw.point(x: int, y: int)
 
 Draws a point at coordinates (x,y)
 
@@ -765,7 +765,7 @@ Parameters:
 
 x, y: The x,y coordinates to draw the point onto.
 
-### SimpleDraw.text(string: str, x: int, y: int)
+### EduDraw.text(string: str, x: int, y: int)
 
 Writes a string of text onto the screen.
 
@@ -776,12 +776,12 @@ string: The text to be written
 x, y: The coordinates of the top-left corner of the text if rect_mode is 'TOP_LEFT' or the middle of the text is rect_mode is 'CENTER'.
 
 
-### SimpleDraw.clear()
+### EduDraw.clear()
 
 Clears the entire canvas and just leaves it's background.
 Note: This method is somewhat costly.
 
-### SimpleDraw.background(color: tuple, fast_mode: bool = True)
+### EduDraw.background(color: tuple, fast_mode: bool = True)
 
 Sets a new background color and clears the canvas to it.
 
@@ -791,7 +791,7 @@ color: A tuple containing the (R, G, B) values of the desired color.
 
 (Optional) fast_mode: Whether to use or not fast mode to draw the background. Fast mode simply draws a rectangle to fill the entire canvas, normal mode clears the entire image to a new one, which is more costly. It's only recommended you use normal mode if you are dealing with edges and can see outside of the background.
 
-### SimpleDraw.circle(x: int, y: int, radius: int)
+### EduDraw.circle(x: int, y: int, radius: int)
 
 Draws a circle onto the screen.
 
@@ -801,7 +801,7 @@ x, y: The coordinates of the top-left part of the rectangle that contains the ci
 
 r: The radius of the circle.
 
-### SimpleDraw.ellipse(x: int, y: int, width: int, height: int)
+### EduDraw.ellipse(x: int, y: int, width: int, height: int)
 
 Draws an ellipse onto the screen.
 
@@ -831,7 +831,7 @@ def draw():
 ![ellipse](https://user-images.githubusercontent.com/88753590/233815202-95fc61d6-b328-4783-85ec-e5f7df4b153a.png)
 
 
-### SimpleDraw.line(x1: int, y1: int, x2: int, y2: int)
+### EduDraw.line(x1: int, y1: int, x2: int, y2: int)
 
 Draws a line between two points.
 
@@ -857,7 +857,7 @@ def draw():
 ![line](https://user-images.githubusercontent.com/88753590/233815204-d355aed5-f9e0-42f3-88b2-90feaf1bfe11.png)
 
 
-### SimpleDraw.rect(x: int, y: int, width: int, height: int)
+### EduDraw.rect(x: int, y: int, width: int, height: int)
 
 Draws a rectangle onto the screen.
 
@@ -893,7 +893,7 @@ def draw():
 ![rect](https://user-images.githubusercontent.com/88753590/233815207-f7f8732b-88ae-4f17-92b7-16006b05237a.png)
 
 
-### SimpleDraw.square(x: int, y: int, side_size: int)
+### EduDraw.square(x: int, y: int, side_size: int)
 
 Draws a square onto the screen.
 
@@ -920,7 +920,7 @@ def draw():
 ![square](https://user-images.githubusercontent.com/88753590/233815209-c043af52-74ed-4b87-939f-39024043e458.png)
 
 
-### SimpleDraw.triangle(x1: int, y1: int, x2: int, y2: int, x3: int, y3: int)
+### EduDraw.triangle(x1: int, y1: int, x2: int, y2: int, x3: int, y3: int)
 
 Draws a triangle onto the screen.
 
@@ -948,7 +948,7 @@ def draw():
 
 
 
-### SimpleDraw.polygon(points: list)
+### EduDraw.polygon(points: list)
 
 Draws any polygon onto the screen.
 
@@ -978,7 +978,7 @@ def draw():
 
 ---
 
-### SimpleDraw.image(img: PIL.Image, x: int, y: int, x2=None, y2=None) 
+### EduDraw.image(img: PIL.Image, x: int, y: int, x2=None, y2=None) 
 
 Draws an image onto the screen at the given position with a determined size. If no size is passed in, the image will have it's original size. This method is very costly depending on the resolution of the images used.
 
@@ -1002,7 +1002,7 @@ def draw():
 
 ![image](https://user-images.githubusercontent.com/88753590/233815229-cc8f4911-005d-44eb-92c3-eb2b4d4a3a16.png)
 
-### SimpleDraw.image_sized(img: PIL.Image, x: int, y: int, width: int = None, height: int = None)
+### EduDraw.image_sized(img: PIL.Image, x: int, y: int, width: int = None, height: int = None)
     
 Displays an image onto the screen on the (x,y) position. If specified a width or height, the image will be resized to those sizes, otherwise, the image will be drawn to it's original size.
     
@@ -1014,29 +1014,29 @@ x, y: The position to draw the image
     
 (Optional) width, height: The sizes to set the image to
 
-### SimpleDraw.frame_rate(fps: int)
+### EduDraw.frame_rate(fps: int)
 
 Changes the framerate of the simulation. Must be called in ```setup()```.
-Note that in the Python version the simulation does not run as fast as the C# one, to run the simulation as fast as possible set the SimpleDraw.deltatime to zero.
+Note that in the Python version the simulation does not run as fast as the C# one, to run the simulation as fast as possible set the EduDraw.deltatime to zero.
 
 Parameters:
 
 int frames: The number of FPS to set the simulation to.
 
 
-### SimpleDraw.save(filename: str)
+### EduDraw.save(filename: str)
 
 Saves the current frame as an image file.
 If filename is empty, the name will be the frame count of when the photo was saved.
 
 
-### SimpleDraw.quit()
+### EduDraw.quit()
 
 Quits the simulation.
 
 ### Null mode
 
-Just like the C# version, you can use an instance of the SimpleDraw class without canvas to make a drawing inside of a drawing.
+Just like the C# version, you can use an instance of the EduDraw class without canvas to make a drawing inside of a drawing.
 For more details, check the C# section about it.
 
 Note, however, that due to the way Pygame screens work, the final window size will be that of the last instance declared, so in order for your main drawing to have it's intended size, make sure to declare it last.
@@ -1045,15 +1045,15 @@ Example:
 
 ```
 # Good example
-inner_drawing = SimpleDraw(300, 300)
-main_drawing = SimpleDraw(600, 600)
+inner_drawing = EduDraw(300, 300)
+main_drawing = EduDraw(600, 600)
 
 # Screen created will have 600x600 size, as intended
 
 # Bad example
-inner_drawing_1 = SimpleDraw(200, 200)
-main_drawing = SimpleDraw(600, 600)
-inner_drawing_2 = SimpleDraw(300, 450)
+inner_drawing_1 = EduDraw(200, 200)
+main_drawing = EduDraw(600, 600)
+inner_drawing_2 = EduDraw(300, 450)
 
 # Screen created will have 300x450 size, while the main drawing was intended to have it's size as 600x600
 ```
