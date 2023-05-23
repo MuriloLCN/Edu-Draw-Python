@@ -123,7 +123,7 @@ class EduDraw:
         self.timeloop = None
         self.deltatime = 1
 
-        self.screen = pygame.display.set_mode((width, height))
+        self.screen = None
 
         self.setup = None
         self.draw = None
@@ -201,6 +201,7 @@ class EduDraw:
         self.setup = setup
         self.draw = draw
         if not self.null_mode:
+            self.screen = pygame.display.set_mode((self.width, self.height))
             pygame.display.set_caption(window_title)
         self._proto_setup()
         self._proto_draw()
