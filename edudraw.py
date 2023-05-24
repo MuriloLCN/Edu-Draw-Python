@@ -1,11 +1,12 @@
+# This branch is an experimental version of EduDraw but without the usage of PIL library
+# This is mostly to see whether a version purely done with Pygame is viable and, most importantly, whether it could be more performatic than
+# the version using PIL.
+
 import gc
-import math
 import time
 import copy
 
 import pygame
-import PIL.Image
-from PIL import ImageDraw, ImageFont, ImageOps
 from threading import Thread
 
 
@@ -46,19 +47,7 @@ class _SimulationData:
     Helper class to hold simulation data
     """
     def __init__(self):
-        # These work as enums
         self.draw_mode = {'TOP_LEFT': 0, 'CENTER': 1}
-        self.transformations = {'ROT': 0, 'TRA': 1, 'SCL': 2}
-
-        self.applied_transformations = []
-
-        self.flag_has_rotation = False
-        self.cumulative_rotation_angle = 0
-
-        self.flag_has_scaling = False
-        self.cumulative_scaling_factor = [1, 1]
-
-        self.account_for_transformations = False
 
         self.current_rect_mode = self.draw_mode['TOP_LEFT']
         self.current_circle_mode = self.draw_mode['CENTER']
@@ -71,7 +60,7 @@ class _SimulationData:
         self.fill_state = True
         self.stroke_state = True
 
-        self.current_text_font = PIL.ImageFont.load_default()
+        self.current_text_font = pygame.font.get_default_font()
 
 
 class _ControlClass:
@@ -114,16 +103,14 @@ class _ControlClass:
 
 
 class EduDraw:
-    def __init__(self, width: int, height: int, null_mode: bool = False):
+    def __init__(self, width: int, height: int):
         self.width = width
         self.height = height
-        self.current_frame = PIL.Image.new('RGBA', (width, height))
-        self.current_graphics = PIL.ImageDraw.Draw(self.current_frame, 'RGBA')
-        self.null_mode = null_mode
+
         self.timeloop = None
         self.deltatime = 1
 
-        self.screen = None
+        self.screen: pygame.surface.Surface | None = None
 
         self.setup = None
         self.draw = None
@@ -161,12 +148,7 @@ class EduDraw:
 
         self.draw()
 
-        if not self.null_mode:
-            img = pygame.image.fromstring(self.current_frame.tobytes(), self.current_frame.size, 'RGBA')
-            rectangle = img.get_rect()
-            rectangle.center = self.width // 2, self.height // 2
-            self.screen.blit(img, rectangle)
-            pygame.display.update()
+        pygame.display.update()
 
         gc.collect()
 
@@ -180,15 +162,9 @@ class EduDraw:
         self.timeloop = _RepeatTimer(self.deltatime, self.timer_tick)
         self.timeloop.start()
 
-        if self.null_mode:
-            return
-
         pygame.display.flip()
         while not self.quitted:
             self.controls.event_handler(pygame.event.get())
-            # for event in pygame.event.get():
-            #    if event.type == pygame.QUIT:
-            #        self.quitted = True
 
     def start(self, setup, draw, window_title: str):
         """
@@ -200,9 +176,13 @@ class EduDraw:
         """
         self.setup = setup
         self.draw = draw
-        if not self.null_mode:
+
+        if not pygame.font.get_init():
             self.screen = pygame.display.set_mode((self.width, self.height))
-            pygame.display.set_caption(window_title)
+            pygame.font.init()
+
+        pygame.display.set_caption(window_title)
+
         self._proto_setup()
         self._proto_draw()
 
@@ -282,103 +262,6 @@ class EduDraw:
 
         return stroke_color, fill_color, stroke_weight
 
-    def _apply_transformations_coords(self, x: int, y: int, no_rotation: bool = False) -> tuple:
-        """
-        Applies all transformations to coordinates in order defined by usage
-
-        :param x: X value of coordinates
-        :param y: Y value of coordinates
-        :param no_rotation: Whether rotation should be skipped
-        :return: A tuple containing the (X, Y) values of the new coordinate location
-        """
-        final_x = x
-        final_y = y
-
-        data = self._get_data_object()
-
-        scale_tf = data.transformations['SCL']
-        translate_tf = data.transformations['TRA']
-        rotate_tf = data.transformations['ROT']
-
-        for transformation in data.applied_transformations:
-            if transformation[0] == scale_tf:
-                final_x *= transformation[1][0]
-                final_y *= transformation[1][1]
-
-            if transformation[0] == translate_tf:
-                final_x += transformation[1][0]
-                final_y += transformation[1][1]
-
-            if transformation[0] == rotate_tf and not no_rotation:
-                angle_sin = math.sin(math.radians(transformation[1]))
-                angle_cos = math.cos(math.radians(transformation[1]))
-                x = final_x * angle_cos - final_y * angle_sin
-                y = final_x * angle_sin + final_y * angle_cos
-                final_x = x
-                final_y = y
-
-        return final_x, final_y
-
-    def _apply_transformations_length(self, width: int, height: int) -> tuple:
-        """
-        Applies all transformations to a set of lengths in order defined by usage
-
-        :param width: The width to be manipulated
-        :param height: The height to be manipulated
-        :return: A tuple with the resulting width and height after transformations
-        """
-        final_width = width
-        final_height = height
-
-        data = self._get_data_object()
-
-        scale_tf = data.transformations['SCL']
-
-        for transformation in data.applied_transformations:
-            # Sizes are only affected by scaling
-            if transformation[0] == scale_tf:
-                final_width *= transformation[1][0]
-                final_height *= transformation[1][1]
-
-        return final_width, final_height
-
-    def _undo_transformations_coords(self, x: int, y: int) -> tuple:
-        """
-        Undoes all transformations of a coordinate to retrieve it's original place.
-        Used for mouse_pos()
-
-        :param x: The x coordinate
-        :param y: The y coordinate
-        :return: A tuple with the (x, y) original coordinates
-        """
-        final_x = x
-        final_y = y
-
-        data = self._get_data_object()
-
-        scale_tf = data.transformations['SCL']
-        translate_tf = data.transformations['TRA']
-        rotate_tf = data.transformations['ROT']
-
-        for transformation in reversed(data.applied_transformations):
-            if transformation[0] == scale_tf:
-                final_x /= transformation[1][0]
-                final_y /= transformation[1][1]
-
-            if transformation[0] == translate_tf:
-                final_x -= transformation[1][0]
-                final_y -= transformation[1][1]
-
-            if transformation[0] == rotate_tf:
-                angle_sin = math.sin(math.radians(transformation[1]))
-                angle_cos = math.cos(math.radians(transformation[1]))
-                x = final_x * angle_cos + final_y * angle_sin
-                y = -final_x * angle_sin + final_y * angle_cos
-                final_x = x
-                final_y = y
-
-        return final_x, final_y
-
     # State methods --------------------------------------------------------------------------------------
 
     def rect_mode(self, mode: str):
@@ -420,7 +303,7 @@ class EduDraw:
         data = self._get_data_object()
         data.fill_state = False
 
-    def change_font(self, font: PIL.ImageFont):
+    def change_font(self, font: pygame.font.Font):
         """
         Changes the font to be used in texts
 
@@ -467,9 +350,6 @@ class EduDraw:
 
         new_data = copy.copy(previous_data)
 
-        # To avoid referencing
-        new_data.applied_transformations = [i for i in previous_data.applied_transformations]
-
         self.data_stack.append(new_data)
 
     def pop(self):
@@ -486,112 +366,7 @@ class EduDraw:
 
         :return: A (x, y) tuple with the positions
         """
-
-        data = self._get_data_object()
-
-        if self.null_mode:
-            return 0, 0
-
-        original_pos = pygame.mouse.get_pos()
-
-        if not data.account_for_transformations:
-            return original_pos
-
-        final_pos = self._undo_transformations_coords(original_pos[0], original_pos[1])
-        return int(final_pos[0]), int(final_pos[1])
-
-    def rotate(self, angle: int):
-        """
-        Rotates the drawing clockwise by the defined amount of degrees
-
-        :param angle: The angle (in degrees) to rotate the drawing
-        """
-        data = self._get_data_object()
-        data.flag_has_rotation = True
-        data.cumulative_rotation_angle += angle
-        data.applied_transformations.append((data.transformations['ROT'], angle))
-
-    def scale(self, scale_x: float, scale_y: float):
-        """
-        Scales the drawing's axis by the desired multipliers
-
-        :param scale_x: The rate to scale the x axis by
-        :param scale_y: The rate to scale the y axis by
-        """
-        if scale_x == 0 or scale_y == 0:
-            return
-
-        data = self._get_data_object()
-        data.flag_has_scaling = True
-        data.cumulative_scaling_factor[0] *= scale_x
-        data.cumulative_scaling_factor[1] *= scale_y
-        data.applied_transformations.append((data.transformations['SCL'], (scale_x, scale_y)))
-
-    def translate(self, translate_x: int, translate_y: int):
-        """
-        Changes the origin of the plane of drawing
-
-        :param translate_x: The amount to translate in the x axis
-        :param translate_y: The amount to translate in the y axis
-        """
-        data = self._get_data_object()
-        data.applied_transformations.append((data.transformations['TRA'], (translate_x, translate_y)))
-
-    def reset_transformations(self):
-        """
-        Resets all transformations
-        """
-        data = self._get_data_object()
-        data.applied_transformations = []
-        data.flag_has_rotation = False
-        data.flag_has_scaling = False
-        data.cumulative_rotation_angle = 0
-        data.cumulative_scaling_factor = [1, 1]
-
-    def _remove_transformation(self, transformation: int):
-        """
-        Removes a desired transformation type from the set of applied transformations
-
-        :param transformation: The transformation type to remove
-        """
-        data = self._get_data_object()
-        data.applied_transformations = [tf for tf in data.applied_transformations if tf[0] != transformation]
-
-    def reset_scaling(self):
-        """
-        Resets all scaling operations done
-        """
-        data = self._get_data_object()
-        scaling = data.transformations['SCL']
-        self._remove_transformation(scaling)
-        data.cumulative_scaling_factor = [1, 1]
-        data.flag_has_scaling = False
-
-    def reset_translation(self):
-        """
-        Resets all translation operations done
-        """
-        data = self._get_data_object()
-        translation = data.transformations['TRA']
-        self._remove_transformation(translation)
-
-    def reset_rotation(self):
-        """
-        Resets all rotation operations done
-        """
-        data = self._get_data_object()
-        rotation = data.transformations['ROT']
-        self._remove_transformation(rotation)
-        data.flag_has_rotation = False
-        data.cumulative_rotation_angle = 0
-
-    def set_account_for_transformations(self, state: bool):
-        """
-        Makes mouse_pos() take into account the transformations and give the original location instead
-        :param state: The state of whether it should be taken into account or not
-        """
-        data = self._get_data_object()
-        data.account_for_transformations = state
+        return pygame.mouse.get_pos()
 
     def set_controls(self, key_down=None, key_up=None, mouse_motion=None, mouse_button_up=None,
                      mouse_button_down=None, mouse_wheel=None):
@@ -631,11 +406,9 @@ class EduDraw:
 
         stroke_color = data.current_stroke_color
 
-        x, y = self._apply_transformations_coords(x, y)
+        pygame.draw.circle(self.screen, stroke_color, (x, y), 1, 0)
 
-        self.current_graphics.point([(x, y)], stroke_color)
-
-    def text(self, string: str, x: int, y: int):
+    def text(self, string: str, x: int, y: int, font_size: int, italic: bool = False, bold: bool = False):
         """
         Displays a string of text onto the screen
 
@@ -651,48 +424,18 @@ class EduDraw:
 
         data = self._get_data_object()
 
-        font = data.current_text_font
+        font: pygame.font.Font = pygame.font.SysFont(data.current_text_font, font_size, bold, italic)
 
-        size_x, size_y = self.current_graphics.textlength(string, font), \
-                         self.current_graphics.textlength(string, font, direction='ttb')
-
-        # Text written normally when not stretched or rotated
-        if data.cumulative_rotation_angle == 0 and data.cumulative_scaling_factor == [1, 1]:
-            x, y = self._apply_transformations_coords(x, y)
-
-            new_x, new_y = self._get_rect_box(x, y, size_x, size_y)
-
-            self.current_graphics.text((new_x, new_y), string, stroke_color, font)
-            return
-
-        new_image = PIL.Image.new('RGBA', (int(size_x) + 1, int(size_y) + 1), color=(0, 0, 0, 0))
-        draw = PIL.ImageDraw.Draw(new_image)
-
-        draw.text((0, 0), string, stroke_color, font)
+        new_image = font.render(string, True, fill_color)
 
         self.image(new_image, x, y)
 
-    def clear(self):
-        """
-        Clears the entire image and replaces it with a new empty one
-
-        NOTE: This method is costly in terms of processing
-        """
-
-        data = self._get_data_object()
-        bgc = data.current_background_color
-
-        self.current_frame = PIL.Image.new('RGBA', (self.width, self.height), color=bgc)
-        self.current_graphics = PIL.ImageDraw.Draw(self.current_frame)
-        gc.collect()
-
-    def background(self, color: tuple, fast_mode: bool = True):
+    def background(self, color: tuple):
         """
         Draws a background over current image. NOTE: Should be called before other drawings so they don't get
         erased by the background.
 
         :param color: The color to draw the background (a (R, G, B) tuple)
-        :param fast_mode: Whether fast mode should be used. Default: True.
 
         Note: Fast mode simply draws a rectangle
         that fills the entire image, disabling it will cause EduDraw.clear() to be called which is more costly
@@ -702,10 +445,7 @@ class EduDraw:
         data = self._get_data_object()
         data.current_background_color = color
 
-        if fast_mode:
-            self.current_graphics.rectangle((0, 0, self.width, self.height), color, None, 0)
-        else:
-            self.clear()
+        pygame.draw.rect(self.screen, color, (0, 0, self.width, self.height))
 
     def circle(self, x: int, y: int, radius: int):
         """
@@ -729,20 +469,28 @@ class EduDraw:
         :param width: The width of the x-axis of the ellipse
         :param height: The height of the y-axis of the ellipse
         """
-        width, height = self._apply_transformations_length(width, height)
+
         data = self._get_data_object()
 
-        pos_x, pos_y = self._get_circle_box(x, y, width, height, True)
-        pos_x, pos_y = self._apply_transformations_coords(pos_x, pos_y)
+        pos_x, pos_y = self._get_circle_box(x, y, width, height)
 
         stroke_color, fill_color, stroke_weight = self._get_stroke_fill_and_weight()
 
+        if data.fill_state:
+            pygame.draw.ellipse(self.screen, fill_color, (pos_x, pos_y, width, height), 0)
+
+        if data.stroke_state:
+            pygame.draw.ellipse(self.screen, stroke_color, (pos_x, pos_y, width, height), data.current_stroke_weight)
+
+        """
         # Circles and 'no rotation' ellipses don't need additional processing
         if width == height or data.cumulative_rotation_angle == 0:
-            self.current_graphics.ellipse([(pos_x, pos_y), (pos_x + width, pos_y + height)], fill_color, stroke_color,
-                                          stroke_weight)
-            return
 
+            # self.current_graphics.ellipse([(pos_x, pos_y), (pos_x + width, pos_y + height)], fill_color, stroke_color,
+            #                               stroke_weight)
+            return
+        
+        
         final_color = (0, 0, 0, 0)
 
         new_image = PIL.Image.new('RGBA', (int(width) + 1, int(height) + 1), color=final_color)
@@ -754,6 +502,7 @@ class EduDraw:
         new_width, new_height = new_image.size
 
         self.current_frame.paste(new_image, (int(pos_x - new_width/2), int(pos_y - new_height/2)), new_image)
+        """
 
     def line(self, x1: int, y1: int, x2: int, y2: int):
         """
@@ -765,12 +514,10 @@ class EduDraw:
         :param y2: The y coordinate of the second point
         """
 
-        x1, y1 = self._apply_transformations_coords(x1, y1)
-        x2, y2 = self._apply_transformations_coords(x2, y2)
-
         stroke_color, fill_color, stroke_weight = self._get_stroke_fill_and_weight()
 
-        self.current_graphics.line([(x1, y1), (x2, y2)], stroke_color, stroke_weight)
+        pygame.draw.line(self.screen, stroke_color, (x1, y1), (x2, y2), stroke_weight)
+        # self.current_graphics.line([(x1, y1), (x2, y2)], stroke_color, stroke_weight)
 
     def rect(self, x: int, y: int, width: int, height: int):
         """
@@ -787,20 +534,11 @@ class EduDraw:
 
         stroke_color, fill_color, stroke_weight = self._get_stroke_fill_and_weight()
 
-        if data.cumulative_rotation_angle != 0:
+        if data.fill_state:
+            pygame.draw.rect(self.screen, fill_color, (pos_x, pos_y, width, height), 0)
 
-            # TODO: See if alternative method (used in ellipse) is faster
-
-            pts = [(pos_x, pos_y), (pos_x + width, pos_y), (pos_x + width, pos_y + height), (pos_x, pos_y + height)]
-
-            self.polygon(pts)
-
-        else:
-            pos_x, pos_y = self._apply_transformations_coords(pos_x, pos_y, True)
-            width, height = self._apply_transformations_length(width, height)
-
-            self.current_graphics.rectangle((pos_x, pos_y, pos_x + width, pos_y + height), fill_color, stroke_color,
-                                            stroke_weight)
+        if data.stroke_state:
+            pygame.draw.rect(self.screen, stroke_color, (pos_x, pos_y, width, height), stroke_weight)
 
     def square(self, x: int, y: int, side_size: int):
         """
@@ -826,13 +564,17 @@ class EduDraw:
         """
         stroke_color, fill_color, stroke_weight = self._get_stroke_fill_and_weight()
 
-        x1, y1 = self._apply_transformations_coords(x1, y1)
-        x2, y2 = self._apply_transformations_coords(x2, y2)
-        x3, y3 = self._apply_transformations_coords(x3, y3)
+        data = self._get_data_object()
 
-        self.current_graphics.polygon((x1, y1, x2, y2, x3, y3), fill_color, stroke_color, stroke_weight)
+        if data.fill_state:
+            pygame.draw.polygon(self.screen, fill_color, ((x1, y1), (x2, y2), (x3, y3)), 0)
 
-    def polygon(self, points: list):
+        if data.stroke_state:
+            pygame.draw.polygon(self.screen, stroke_color, ((x1, y1), (x2, y2), (x3, y3)), stroke_weight)
+
+        # self.current_graphics.polygon((x1, y1, x2, y2, x3, y3), fill_color, stroke_color, stroke_weight)
+
+    def polygon(self, points: list | tuple):
         """
         Draws a polygon onto the screen
 
@@ -841,86 +583,17 @@ class EduDraw:
         """
         stroke_color, fill_color, stroke_weight = self._get_stroke_fill_and_weight()
 
-        points = [self._apply_transformations_coords(x[0], x[1]) for x in points]
-
-        self.current_graphics.polygon(points, fill_color, stroke_color, stroke_weight)
-
-    def image(self, img: PIL.Image, x: int, y: int, x2: int = None, y2: int = None):
-        """
-        Displays an image onto the screen with it's top-left corner on the (x,y) position.
-        If specified a (x2, y2) pair, the image will be resized to fit onto the rectangle that those coordinates define,
-        otherwise, the image will be drawn to it's original size.
-        Note: This is a very costly method
-
-        :param img: The Image to be displayed
-        :param x: The x coordinate of the top-left corner of the image
-        :param y: The y coordinate of the top-left corner of the image
-        :param x2: (Optional) The x coordinate of the bottom-right corner of the image
-        :param y2: (Optional) The y coordinate of the bottom-right corner of the image
-        """
-
         data = self._get_data_object()
 
-        temp_draw_mode = data.current_rect_mode
+        if data.fill_state:
+            pygame.draw.polygon(self.screen, fill_color, points, 0)
 
-        has_rotation = not data.cumulative_rotation_angle == 0
+        if data.stroke_state:
+            pygame.draw.polygon(self.screen, stroke_color, points, stroke_weight)
 
-        width, height = img.size
+        # self.current_graphics.polygon(points, fill_color, stroke_color, stroke_weight)
 
-        if x2 is None or y2 is None:
-            target_width, target_height = self._apply_transformations_length(width, height)
-        else:
-            data.current_rect_mode = data.draw_mode['TOP_LEFT']
-            target_width = x2 - x
-            target_height = y2 - y
-
-            if y2 < y:
-                y, y2 = y2, y
-
-            if x2 < x:
-                x, x2 = x2, x
-
-            target_width, target_height = self._apply_transformations_length(target_width, target_height)
-
-        if target_width == 0 or target_height == 0:
-            return
-
-        if target_width < 0:
-            target_width *= -1
-            # x -= target_width
-            img = ImageOps.mirror(img)
-
-        if target_height < 0:
-            target_height *= -1
-            # y -= target_height
-            img = ImageOps.flip(img)
-
-        target_width = int(target_width)
-        target_height = int(target_height)
-
-        img = img.resize((target_width, target_height))
-        img = img.rotate(-data.cumulative_rotation_angle, expand=True)
-
-        if not has_rotation:
-            invert = False
-        else:
-            invert = True
-
-        x, y = self._get_rect_box(x, y, width, height, invert)
-        x, y = self._apply_transformations_coords(x, y)
-
-        real_w, real_h = img.size
-
-        if not has_rotation:
-            box = (int(x), int(y))
-        else:
-            box = (int(x - real_w//2), int(y - real_h//2))
-
-        self.current_frame.paste(img, box, img)
-
-        data.current_rect_mode = temp_draw_mode
-
-    def image_sized(self, img: PIL.Image, x: int, y: int, width: int = None, height: int = None):
+    def image(self, img: pygame.surface.Surface, x: int, y: int, width: int = None, height: int = None):
         """
         Displays an image onto the screen on the (x,y) position.
         If specified a width or height, the image will be resized to those sizes, otherwise, the image will be drawn
@@ -933,9 +606,7 @@ class EduDraw:
         :param height: (Optional) The height to resize the image
         """
 
-        data = self._get_data_object()
-
-        size = img.size
+        size = img.get_size()
 
         if width is None:
             width = size[0]
@@ -943,42 +614,13 @@ class EduDraw:
         if height is None:
             height = size[1]
 
-        target_width, target_height = self._apply_transformations_length(width, height)
+        img = pygame.transform.scale(img, (width, height))
 
-        if target_width == 0 or target_height == 0:
-            return
+        x, y = self._get_rect_box(x, y, width, height)
 
-        if target_width < 0:
-            target_width *= -1
-            # x -= target_width
-            img = ImageOps.mirror(img)
+        size = img.get_size()
 
-        if target_height < 0:
-            target_height *= -1
-            # y -= target_height
-            img = ImageOps.flip(img)
-
-        img = img.resize((target_width, target_height))
-        img = img.rotate(-data.cumulative_rotation_angle, expand=True)
-
-        has_rotation = data.cumulative_rotation_angle != 0
-
-        if not has_rotation:
-            invert = False
-        else:
-            invert = True
-
-        x, y = self._get_rect_box(x, y, width, height, invert)
-        x, y = self._apply_transformations_coords(x, y)
-
-        real_w, real_h = img.size
-
-        if not has_rotation:
-            box = (int(x), int(y))
-        else:
-            box = (int(x - real_w//2), int(y - real_h//2))
-
-        self.current_frame.paste(img, box, img)
+        self.screen.blit(img, (x, y, size[0], size[1]))
 
     def frame_rate(self, fps: int):
         """
@@ -995,7 +637,8 @@ class EduDraw:
         """
         if filename == '':
             filename = f'{self.frame_count}.png'
-        self.current_frame.save(filename)
+        # self.current_frame.save(filename)
+        pygame.image.save(self.screen, filename)
 
     def quit(self):
         """
