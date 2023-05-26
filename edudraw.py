@@ -72,6 +72,7 @@ class _SimulationData:
         self.stroke_state = True
 
         self.current_text_font = pygame.font.get_default_font()
+        self.custom_font_object = None
 
 
 class _ControlClass:
@@ -132,6 +133,8 @@ class EduDraw:
         self.reset_after_loop = True
         self.frame_count = 0
 
+        self.original_font_instance = None
+
         self.data = _SimulationData()
         # Data stack used for temporary states
         self.data_stack = []
@@ -144,6 +147,8 @@ class EduDraw:
         """
 
         self.data = _SimulationData()
+        self.data_stack = []
+        self.data.custom_font_object = self.original_font_instance
         gc.collect()
 
     def _proto_setup(self):
@@ -196,6 +201,10 @@ class EduDraw:
 
         if not pygame.font.get_init():
             pygame.font.init()
+
+        data = self._get_data_object()
+        self.original_font_instance = pygame.font.SysFont(data.current_text_font, 15)
+        data.custom_font_object = self.original_font_instance
 
         if self.null_mode:
             self.screen = pygame.surface.Surface((self.width, self.height))
@@ -643,7 +652,7 @@ class EduDraw:
 
         pygame.draw.circle(self.screen, stroke_color, (x, y), 1, 0)
 
-    def text(self, string: str, x: int, y: int, font_size: int, italic: bool = False, bold: bool = False):
+    def text(self, string: str, x: int, y: int):
         """
         Displays a string of text onto the screen
 
@@ -651,9 +660,6 @@ class EduDraw:
         :param x: The x coordinate of the text (if rect_mode is center, this will be the center of the rectangle
         containing the text, otherwise, it'll be the top-left corner of said rectangle)
         :param y: The y coordinate of the text
-        :param font_size: The size of the font to draw the text
-        :param italic: Whether the text should be italic or not (default: false)
-        :param bold: Whether the text should be bold or not (default: false)
         """
         if string == '':
             return
@@ -662,13 +668,55 @@ class EduDraw:
 
         data = self._get_data_object()
 
-        font: pygame.font.Font = pygame.font.SysFont(data.current_text_font, font_size, bold, italic)
+        font = data.custom_font_object
 
         new_image = font.render(string, data.anti_aliasing, fill_color)
 
         self.image(new_image, x, y)
 
-    # Todo: Add font() command
+    def font(self, new_font: str, font_size: int = 12, bold=False, italic=False, underline=False):
+        """
+        Changes the font to be used when writing text.
+        When the font is changed, all text will have it's font size, so the parameter for size in the text() method
+        is not used. Note: This is a costly method, if possible, it's recommended to use it once in setup() instead
+        of every frame in draw(). If you need to change font mid-drawing, it's recommended to use font_from_instance()
+        instead.
+
+        :param new_font: The name of the new font to be used
+        :param font_size: The size of the font to be used
+        :param bold: Whether the font should be bold or not
+        :param italic: Whether the font should be italic or not
+        :param underline: Whether the font should have an underline or not
+        """
+        font_path = pygame.font.match_font(new_font)
+        font_object = pygame.font.Font(font_path, font_size)
+
+        font_object.set_bold(bold)
+        font_object.set_italic(italic)
+        font_object.set_underline(underline)
+
+        data = self._get_data_object()
+        data.custom_font_object = font_object
+
+    def font_from_instance(self, new_font: pygame.font.Font):
+        """
+        Sets the font to be used when writing text to a premade instance of a pygame.font.Font object.
+        It is recommended that, if you need to change fonts mid-drawing, you preload those fonts once before in your
+        program and use this method to change them, instead of using the normal font() method, since it's costly to
+        keep creating new instances every frame and the effect this has on performance is noticeable.
+
+        :param new_font: A pygame font instance to be used
+        """
+        data = self._get_data_object()
+        data.custom_font_object = new_font
+
+    def reset_font(self):
+        """
+        Resets the font used to the default font
+        """
+        data = self._get_data_object()
+        data.custom_font_object = None
+        data.custom_font = False
 
     def background(self, color: tuple):
         """
@@ -926,7 +974,7 @@ class EduDraw:
             raise ValueError
 
         img = pygame.transform.scale(img, (width, height))
-        img = pygame.transform.rotate(img, data.cumulative_rotation_angle)
+        img = pygame.transform.rotate(img, -data.cumulative_rotation_angle)
 
         has_rotation = data.cumulative_rotation_angle != 0
 
