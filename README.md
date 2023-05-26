@@ -559,6 +559,38 @@ def draw():
 
 ![rotation](https://user-images.githubusercontent.com/88753590/236652911-7dba1539-0b43-468c-a1ba-d707c20a8730.png)
 
+Example 2:
+
+```
+def draw():
+    s.background((255, 255, 255))
+    s.fill((0, 0, 0))
+    s.fill((255, 0, 0))
+    s.circle_mode('CENTER')
+    s.rotate(s.frame_count)
+    s.translate(s.width // 2, s.height // 2)
+    s.circle(0, 0, 10)
+    s.push()
+    s.fill((0, 255, 0))
+    s.reset_translation()
+    s.rotate(s.frame_count)
+    s.translate(s.width // 2, s.height // 2)
+    s.circle(20, 0, 10)
+    s.push()
+    s.fill((0, 0, 255))
+    s.reset_translation()
+    s.rotate(s.frame_count)
+    s.translate(s.width // 2, s.height // 2)
+    s.circle(40, 0, 10)
+    s.pop()
+    s.circle(60, 0, 10)
+    s.pop()
+    s.circle(80, 0, 10)
+```
+
+![advancedexample](https://user-images.githubusercontent.com/88753590/236653135-d38838d1-518c-4b70-a664-ea121cf71315.gif)
+
+
 
 ### EduDraw.scale(scale_x: float, scale_y: float) 
 
@@ -635,39 +667,6 @@ Resets all scaling transformations applied.
 ### EduDraw.reset_translation() 
 
 Resets all translation transformations applied.
-
-Example:
-
-```
-def draw():
-    s.background((255, 255, 255))
-    s.fill((0, 0, 0))
-    s.fill((255, 0, 0))
-    s.circle_mode('CENTER')
-    s.rotate(s.frame_count)
-    s.translate(s.width // 2, s.height // 2)
-    s.circle(0, 0, 10)
-    s.push()
-    s.fill((0, 255, 0))
-    s.reset_translation()
-    s.rotate(s.frame_count)
-    s.translate(s.width // 2, s.height // 2)
-    s.circle(20, 0, 10)
-    s.push()
-    s.fill((0, 0, 255))
-    s.reset_translation()
-    s.rotate(s.frame_count)
-    s.translate(s.width // 2, s.height // 2)
-    s.circle(40, 0, 10)
-    s.pop()
-    s.circle(60, 0, 10)
-    s.pop()
-    s.circle(80, 0, 10)
-```
-
-![advancedexample](https://user-images.githubusercontent.com/88753590/236653135-d38838d1-518c-4b70-a664-ea121cf71315.gif)
-
-
 
 ### EduDraw.reset_rotation() 
 
