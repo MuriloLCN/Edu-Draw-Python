@@ -4,6 +4,7 @@ import copy
 import math
 
 import pygame
+from pygame import gfxdraw
 from threading import Thread
 
 
@@ -64,6 +65,8 @@ class _SimulationData:
         self.current_fill_color = (0, 0, 0)
         self.current_background_color = (125, 125, 125)
         self.current_stroke_weight = 1
+
+        self.anti_aliasing = False
 
         self.fill_state = True
         self.stroke_state = True
@@ -611,6 +614,14 @@ class EduDraw:
         self.controls.mouse_button_down = mouse_button_down
         self.controls.mouse_wheel = mouse_wheel
 
+    def toggle_antialiasing(self):
+        """
+        Toggles antialiasing for drawing shapes. Antialiasing is off by default.
+        """
+        data = self._get_data_object()
+
+        data.anti_aliasing = not data.anti_aliasing
+
     # Draw methods --------------------------------------------------------------------------------------
 
     def point(self, x: int, y: int):
@@ -640,6 +651,9 @@ class EduDraw:
         :param x: The x coordinate of the text (if rect_mode is center, this will be the center of the rectangle
         containing the text, otherwise, it'll be the top-left corner of said rectangle)
         :param y: The y coordinate of the text
+        :param font_size: The size of the font to draw the text
+        :param italic: Whether the text should be italic or not (default: false)
+        :param bold: Whether the text should be bold or not (default: false)
         """
         if string == '':
             return
@@ -650,7 +664,7 @@ class EduDraw:
 
         font: pygame.font.Font = pygame.font.SysFont(data.current_text_font, font_size, bold, italic)
 
-        new_image = font.render(string, True, fill_color)
+        new_image = font.render(string, data.anti_aliasing, fill_color)
 
         self.image(new_image, x, y)
 
@@ -701,29 +715,48 @@ class EduDraw:
         width, height = self._apply_transformations_length(width, height)
         width, height = int(width), int(height)
 
-        pos_x, pos_y = self._get_circle_box(x, y, width, height, True)
+        if data.cumulative_rotation_angle == 0:
+            has_rotation = False
+        else:
+            has_rotation = True
+
+        pos_x, pos_y = self._get_circle_box(x, y, width, height, has_rotation)
         pos_x, pos_y = self._apply_transformations_coords(pos_x, pos_y)
         pos_x, pos_y = int(pos_x), int(pos_y)
 
         stroke_color, fill_color, stroke_weight = self._get_stroke_fill_and_weight()
 
-        if data.cumulative_rotation_angle == 0:
+        if not has_rotation or width == height:
             if data.fill_state:
-                pygame.draw.ellipse(self.screen, fill_color, (pos_x, pos_y, width, height), 0)
+                if data.anti_aliasing:
+                    gfxdraw.filled_ellipse(self.screen, pos_x + width // 2, pos_y + height // 2, width // 2,
+                                           height // 2, fill_color)
+                else:
+                    pygame.draw.ellipse(self.screen, fill_color, (pos_x, pos_y, width, height), 0)
 
             if data.stroke_state:
-                pygame.draw.ellipse(self.screen, stroke_color, (pos_x, pos_y, width, height),
-                                    data.current_stroke_weight)
+                if data.anti_aliasing:
+                    gfxdraw.aaellipse(self.screen, pos_x + width // 2, pos_y + height // 2, width // 2,
+                                      height // 2, stroke_color)
+                else:
+                    pygame.draw.ellipse(self.screen, stroke_color, (pos_x, pos_y, width, height),
+                                        data.current_stroke_weight)
             return
 
-        new_surface = pygame.surface.Surface((width, height), pygame.SRCALPHA)
+        new_surface = pygame.surface.Surface((width + 1, height + 1), pygame.SRCALPHA)
 
-        if data.fill_state:
-            pygame.draw.ellipse(new_surface, fill_color, (0, 0, width, height), 0)
+        if data.anti_aliasing:
+            if data.stroke_state:
+                gfxdraw.aaellipse(new_surface, width//2, height//2, width//2, height//2, stroke_color)
+            if data.fill_state:
+                gfxdraw.filled_ellipse(new_surface, width//2, height//2, width//2, height//2, fill_color)
+        else:
+            if data.fill_state:
+                pygame.draw.ellipse(new_surface, fill_color, (0, 0, width, height), 0)
 
-        if data.stroke_state:
-            pygame.draw.ellipse(new_surface, stroke_color, (0, 0, width, height),
-                                data.current_stroke_weight)
+            if data.stroke_state:
+                pygame.draw.ellipse(new_surface, stroke_color, (0, 0, width, height),
+                                    data.current_stroke_weight)
 
         new_surface = pygame.transform.rotate(new_surface, -data.cumulative_rotation_angle)
 
@@ -741,11 +774,17 @@ class EduDraw:
         """
         x1, y1 = self._apply_transformations_coords(x1, y1)
         x2, y2 = self._apply_transformations_coords(x2, y2)
+        x1, y1 = int(x1), int(y1)
+        x2, y2 = int(x2), int(y2)
 
         stroke_color, fill_color, stroke_weight = self._get_stroke_fill_and_weight()
 
-        pygame.draw.line(self.screen, stroke_color, (x1, y1), (x2, y2), stroke_weight)
-        # self.current_graphics.line([(x1, y1), (x2, y2)], stroke_color, stroke_weight)
+        data = self._get_data_object()
+
+        if data.anti_aliasing:
+            gfxdraw.line(self.screen, x1, y1, x2, y2, stroke_color)
+        else:
+            pygame.draw.line(self.screen, stroke_color, (x1, y1), (x2, y2), stroke_weight)
 
     def rect(self, x: int, y: int, width: int, height: int):
         """
@@ -772,10 +811,16 @@ class EduDraw:
         width, height = self._apply_transformations_length(width, height)
 
         if data.fill_state:
-            pygame.draw.rect(self.screen, fill_color, (pos_x, pos_y, width, height), 0)
+            if data.anti_aliasing:
+                gfxdraw.box(self.screen, (pos_x, pos_y, width, height), fill_color)
+            else:
+                pygame.draw.rect(self.screen, fill_color, (pos_x, pos_y, width, height), 0)
 
         if data.stroke_state:
-            pygame.draw.rect(self.screen, stroke_color, (pos_x, pos_y, width, height), stroke_weight)
+            if data.anti_aliasing:
+                gfxdraw.rectangle(self.screen, (pos_x, pos_y, width, height), stroke_color)
+            else:
+                pygame.draw.rect(self.screen, stroke_color, (pos_x, pos_y, width, height), stroke_weight)
 
     def square(self, x: int, y: int, side_size: int):
         """
@@ -808,10 +853,16 @@ class EduDraw:
         data = self._get_data_object()
 
         if data.fill_state:
-            pygame.draw.polygon(self.screen, fill_color, ((x1, y1), (x2, y2), (x3, y3)), 0)
+            if data.anti_aliasing:
+                gfxdraw.filled_trigon(self.screen, x1, y1, x2, y2, x3, y3, fill_color)
+            else:
+                pygame.draw.polygon(self.screen, fill_color, ((x1, y1), (x2, y2), (x3, y3)), 0)
 
         if data.stroke_state:
-            pygame.draw.polygon(self.screen, stroke_color, ((x1, y1), (x2, y2), (x3, y3)), stroke_weight)
+            if data.anti_aliasing:
+                gfxdraw.aatrigon(self.screen, x1, y1, x2, y2, x3, y3, stroke_color)
+            else:
+                pygame.draw.polygon(self.screen, stroke_color, ((x1, y1), (x2, y2), (x3, y3)), stroke_weight)
 
         # self.current_graphics.polygon((x1, y1, x2, y2, x3, y3), fill_color, stroke_color, stroke_weight)
 
@@ -829,10 +880,16 @@ class EduDraw:
         points = [self._apply_transformations_coords(x[0], x[1]) for x in points]
 
         if data.fill_state:
-            pygame.draw.polygon(self.screen, fill_color, points, 0)
+            if data.anti_aliasing:
+                gfxdraw.filled_polygon(self.screen, points, fill_color)
+            else:
+                pygame.draw.polygon(self.screen, fill_color, points, 0)
 
         if data.stroke_state:
-            pygame.draw.polygon(self.screen, stroke_color, points, stroke_weight)
+            if data.anti_aliasing:
+                gfxdraw.aapolygon(self.screen, points, stroke_color)
+            else:
+                pygame.draw.polygon(self.screen, stroke_color, points, stroke_weight)
 
         # self.current_graphics.polygon(points, fill_color, stroke_color, stroke_weight)
 
