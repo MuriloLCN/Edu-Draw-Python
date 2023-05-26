@@ -8,6 +8,21 @@ from pygame import gfxdraw
 from threading import Thread
 
 
+class _InstanceControl:
+    def __init__(self):
+        self.instances = []
+
+    def add(self, new_instance):
+        self.instances.append(new_instance)
+
+    def quit_all(self):
+        for instance in self.instances:
+            instance.quitted = True
+
+
+_instance_handler = _InstanceControl()
+
+
 class _RepeatTimer:
     """
     Helper class for a repeated timer
@@ -98,7 +113,7 @@ class _ControlClass:
     def event_handler(self, events):
         for event in events:
             if event.type == pygame.QUIT:
-                self.main_instance.quitted = True
+                self.main_instance.quit()
                 return
             if event.type == pygame.KEYDOWN:
                 self.run(self.key_down, event.__dict__)
@@ -116,6 +131,7 @@ class _ControlClass:
 
 class EduDraw:
     def __init__(self, width: int, height: int, null_mode: bool = False):
+        global _instance_handler
         self.width = width
         self.height = height
 
@@ -123,6 +139,9 @@ class EduDraw:
         self.deltatime = 1
 
         self.null_mode = null_mode
+
+        if null_mode:
+            _instance_handler.add(self)
 
         self.screen: pygame.surface.Surface | None = None
 
@@ -207,7 +226,7 @@ class EduDraw:
         data.custom_font_object = self.original_font_instance
 
         if self.null_mode:
-            self.screen = pygame.surface.Surface((self.width, self.height))
+            self.screen = pygame.surface.Surface((self.width, self.height), flags=pygame.SRCALPHA)
         else:
             self.screen = pygame.display.set_mode((self.width, self.height))
             pygame.display.set_caption(window_title)
@@ -1016,8 +1035,12 @@ class EduDraw:
         pygame.image.save(self.screen, filename)
 
     def quit(self):
+        global _instance_handler
         """
         Stops the simulation
         """
 
         self.quitted = True
+
+        if not self.null_mode:
+            _instance_handler.quit_all()
