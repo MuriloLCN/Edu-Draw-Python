@@ -9,6 +9,9 @@ from threading import Thread
 
 
 class _InstanceControl:
+    """
+    Helper class to control null mode instances' closures when main instance quits
+    """
     def __init__(self):
         self.instances = []
 
@@ -448,16 +451,6 @@ class EduDraw:
         data = self._get_data_object()
         data.fill_state = False
 
-    def change_font(self, font: pygame.font.Font):
-        """
-        Changes the font to be used in texts
-
-        :param font: The new font to be used
-        """
-
-        data = self._get_data_object()
-        data.current_text_font = font
-
     def stroke(self, color: tuple):
         """
         Specifies the color to be used for the outlines of shapes
@@ -717,6 +710,18 @@ class EduDraw:
         data = self._get_data_object()
         data.custom_font_object = font_object
 
+    def change_default_font(self, new_font: str, font_size: int = 12, bold=False, italic=False, underline=False):
+        font_path = pygame.font.match_font(new_font)
+        font_object = pygame.font.Font(font_path, font_size)
+
+        font_object.set_bold(bold)
+        font_object.set_italic(italic)
+        font_object.set_underline(underline)
+
+        self.original_font_instance = font_object
+        data = self._get_data_object()
+        data.custom_font_object = font_object
+
     def font_from_instance(self, new_font: pygame.font.Font):
         """
         Sets the font to be used when writing text to a premade instance of a pygame.font.Font object.
@@ -931,8 +936,6 @@ class EduDraw:
             else:
                 pygame.draw.polygon(self.screen, stroke_color, ((x1, y1), (x2, y2), (x3, y3)), stroke_weight)
 
-        # self.current_graphics.polygon((x1, y1, x2, y2, x3, y3), fill_color, stroke_color, stroke_weight)
-
     def polygon(self, points: list | tuple):
         """
         Draws a polygon onto the screen
@@ -988,7 +991,6 @@ class EduDraw:
         if target_width == 0 or target_height == 0:
             return
 
-        # TODO: Check for flips on the image instead of raising error
         if width < 0 or height < 0:
             raise ValueError
 
