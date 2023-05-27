@@ -1059,24 +1059,74 @@ Quits the simulation.
 
 ### Null mode
 
-Just like the C# version, you can use an instance of the EduDraw class without canvas to make a drawing inside of a drawing.
-For more details, check the C# section about it.
+Null mode is a mode in which you can run an instance of a simulation without having it running directly onto the canvas. You can do this for many reasons, including using EduDraw in a different context or application, creating multiple drawings inside of one another, among other things.
 
-Note, however, that due to the way Pygame screens work, the final window size will be that of the last instance declared, so in order for your main drawing to have it's intended size, make sure to declare it last.
+To initialize an EduDraw instance in null mode, you can use the optional parameter for it in the `start()` method.
 
-Example:
+Example of null mode:
 
 ```
-# Good example
-inner_drawing = EduDraw(300, 300)
-main_drawing = EduDraw(600, 600)
+s = EduDraw(500, 500) # Main instance
+d = EduDraw(250, 250, True) # Null mode ('inner') instance
 
-# Screen created will have 600x600 size, as intended
+def setup():
+  {...}
 
-# Bad example
-inner_drawing_1 = EduDraw(200, 200)
-main_drawing = EduDraw(600, 600)
-inner_drawing_2 = EduDraw(300, 450)
+def draw():
+  {...}
 
-# Screen created will have 300x450 size, while the main drawing was intended to have it's size as 600x600
+def inner_setup():
+  {...}
+
+def inner_draw():
+  {...}
+  
+s.start(setup, draw, "My window title")
+d.start(inner_setup, inner_draw, "This text is not shown")
 ```
+
+In order to be able to visualize instance of null mode, you'll have to retrieve the images (`pygame.surface.Surface`) and use those in your drawing or any other desired output (whether that be an icon, a display, a file, etc.).
+
+You can retrieve the images with the `EduDraw.screen` variable. With that Surface object retrieved, you can use it wherever it's necessary, and you have much more flexibility for what to do with it.
+
+A good example of this is to run two instances of EduDraw, one normal and one null, and use the retrieved images from the null instance as an argument for EduDraw.image(), essentially creating a drawing inside of a drawing, like the example below:
+
+```
+s = EduDraw(200, 200)
+d = EduDraw(100, 100, True)
+
+position = [d.width/2, d.height//2]
+velocity = [3, 4]
+
+# We don't need to setup anything in this case
+def setup():
+    pass
+
+def inner_drawing():
+    global position, velocity
+    if position[0] < 0 or position[0] > d.width:
+        velocity[0] *= -1
+
+    if position[1] < 0 or position[1] > d.height:
+        velocity[1] *= -1
+
+    position[0] += velocity[0]
+    position[1] += velocity[1]
+
+    d.fill((255, 0, 0))
+    d.stroke((0, 0, 255))
+    d.circle(position[0], position[1], 5)
+
+def draw():
+    s.background((200, 200, 200))
+    s.rotate(s.frame_count)
+    s.rect_mode("CENTER")
+    s.translate(s.width // 2, s.height // 2)
+    s.image(d.screen, 0, 0)
+    
+d.start(setup, inner_drawing, "This does not appear")
+s.start(setup, draw, "My drawing :D")
+```
+
+![nullmode](https://github.com/MuriloLCN/Edu-Draw-Python/assets/88753590/5026c565-f081-49cf-8bfd-55fe487bada6)
+
