@@ -199,7 +199,7 @@ setup: The setup() function written by the user
 
 draw: The draw() function written by the user
 
-window_title: A string to be used as a title for the window running the simulation.
+window_title: A string to be used as a title for the window running the simulation. Note: This parameter is unused for null mode instances.
 
 ### EduDraw.rect_mode(mode: str)
 
@@ -306,13 +306,38 @@ Example:
 
 Makes all shapes drawn after this call to not be filled in.
 
-### EduDraw.change_font(font: PIL.ImageFont)
+### EduDraw.font(new_font: str, font_size: int = 12, bold=False, italic=False, underline=False)
 
-Changes the font used in the canvas. If temp state is on, it will change the temporary font only.
+Changes the font to be used when writing text. When the font is changed, all text will have it's font size, so the parameter for size in the `text()` method is not used. Note: This is a costly method, if possible, it's recommended to use it once in `setup()` instead of every frame in `draw()`. If you need to change font mid-drawing, it's recommended to use `font_from_instance()` instead with a preloaded font.
 
 Parameters:
 
-font: A PIL.ImageFont instance to be used on the simulation
+new_font: The name of the font to be used. See [Pygame fonts](https://www.pygame.org/docs/ref/font.html#pygame.font.get_fonts)
+
+font_size: The size of the font to be used.
+
+bold: Whether the font should be bold or not. Default: False
+
+italic: Whether the font should be italic or not. Default: False
+
+underline: Whether the font should have an underline or not. Default: False
+
+### EduDraw.font_from_instance(new_font: pygame.font.Font)
+
+Sets the font to be used when writing text to a premade instance of a `pygame.font.Font` object. It is recommended that, if you need to change fonts mid-drawing, you preload those fonts once before in your program and use this method to change them, instead of using the normal `font()` method, since it's costly to keep creating new instances every frame and the effect this has on performance is noticeable.
+
+Parameters:
+
+new_font: A `pygame.font.Font` instance to be used for text.
+
+### EduDraw.change_default_font(new_font: str, font_size: int = 12, bold=False, italic=False, underline=False)
+
+Changes the default font to be used. This method is meant to be called in `setup()`, and is the preferred way of changing the font.
+The parameters are the same as `font()`.
+
+### EduDraw.reset_font()
+
+Resets the font used to the default one.
 
 ### EduDraw.stroke(color: tuple)
 
@@ -349,6 +374,8 @@ Makes all subsequent shapes not have their outlines drawn.
 ### EduDraw.stroke_weight(new_weight: int)
 
 Changes how thick or thin the stroke lines are, smaller numbers means thinner outlines, bigger numbers mean thicker outlines.
+
+Note: Due to the way antialiasing works with `gfxdraw`, the stroke weight has NO effect when drawing antialiased primitives and is always 1px.
 
 Parameters:
 
@@ -559,6 +586,38 @@ def draw():
 
 ![rotation](https://user-images.githubusercontent.com/88753590/236652911-7dba1539-0b43-468c-a1ba-d707c20a8730.png)
 
+Example 2:
+
+```
+def draw():
+    s.background((255, 255, 255))
+    s.fill((0, 0, 0))
+    s.fill((255, 0, 0))
+    s.circle_mode('CENTER')
+    s.rotate(s.frame_count)
+    s.translate(s.width // 2, s.height // 2)
+    s.circle(0, 0, 10)
+    s.push()
+    s.fill((0, 255, 0))
+    s.reset_translation()
+    s.rotate(s.frame_count)
+    s.translate(s.width // 2, s.height // 2)
+    s.circle(20, 0, 10)
+    s.push()
+    s.fill((0, 0, 255))
+    s.reset_translation()
+    s.rotate(s.frame_count)
+    s.translate(s.width // 2, s.height // 2)
+    s.circle(40, 0, 10)
+    s.pop()
+    s.circle(60, 0, 10)
+    s.pop()
+    s.circle(80, 0, 10)
+```
+
+![advancedexample](https://user-images.githubusercontent.com/88753590/236653135-d38838d1-518c-4b70-a664-ea121cf71315.gif)
+
+
 
 ### EduDraw.scale(scale_x: float, scale_y: float) 
 
@@ -636,39 +695,6 @@ Resets all scaling transformations applied.
 
 Resets all translation transformations applied.
 
-Example:
-
-```
-def draw():
-    s.background((255, 255, 255))
-    s.fill((0, 0, 0))
-    s.fill((255, 0, 0))
-    s.circle_mode('CENTER')
-    s.rotate(s.frame_count)
-    s.translate(s.width // 2, s.height // 2)
-    s.circle(0, 0, 10)
-    s.push()
-    s.fill((0, 255, 0))
-    s.reset_translation()
-    s.rotate(s.frame_count)
-    s.translate(s.width // 2, s.height // 2)
-    s.circle(20, 0, 10)
-    s.push()
-    s.fill((0, 0, 255))
-    s.reset_translation()
-    s.rotate(s.frame_count)
-    s.translate(s.width // 2, s.height // 2)
-    s.circle(40, 0, 10)
-    s.pop()
-    s.circle(60, 0, 10)
-    s.pop()
-    s.circle(80, 0, 10)
-```
-
-![advancedexample](https://user-images.githubusercontent.com/88753590/236653135-d38838d1-518c-4b70-a664-ea121cf71315.gif)
-
-
-
 ### EduDraw.reset_rotation() 
 
 Resets all rotation transformations applied.
@@ -733,25 +759,37 @@ s.start(setup, draw, 'Hello')
 Example 2:
 
 ```
-pos = 4
-my_char = ''
+my_word = ''
 
 def setup():
     s.set_controls(key_down=get_char)
+    s.change_default_font('times new roman', 30, italic=True)
 
 def draw():
-    s.stroke((255, 255, 255))
-    s.scale(2, 2)
-    s.text(my_char, pos, s.height // 4)
+    s.fill((255, 255, 255))
+    s.background((0, 0, 0))
+    s.rect_mode("CENTER")
+    s.text(my_word, s.width // 2, s.height // 2)
 
 def get_char(data: dict):
-    global my_char, pos
-    my_char = data['unicode']
-    pos += 5
+    global my_word
+    print(data)
+    unicode = data['unicode']
+    if unicode == '\x08':
+        my_word = my_word[:-1]
+    else:
+        my_word += data['unicode']
 ```
 
-![helloworld](https://user-images.githubusercontent.com/88753590/236653191-08dfcdd3-6c9b-47ec-bed0-da9866c821aa.gif)
+![keyexample](https://github.com/MuriloLCN/Edu-Draw-Python/assets/88753590/ddb1a44e-77a0-46f3-bf10-fff2d76989ec)
 
+
+### EduDraw.toggle_antialising()
+
+Toggles antialiasing on or off. It's off by default.
+
+Note: Antialiasing needs more processing, especially when the number of shapes and their complexity is higher. Also, antialised shapes do not take
+into account the stroke weight of the lines, and all lines are drawn with the weight of 1px.
 
 ## Drawing methods
 
@@ -776,20 +814,13 @@ string: The text to be written
 x, y: The coordinates of the top-left corner of the text if rect_mode is 'TOP_LEFT' or the middle of the text is rect_mode is 'CENTER'.
 
 
-### EduDraw.clear()
-
-Clears the entire canvas and just leaves it's background.
-Note: This method is somewhat costly.
-
-### EduDraw.background(color: tuple, fast_mode: bool = True)
+### EduDraw.background(color: tuple)
 
 Sets a new background color and clears the canvas to it.
 
 Parameters:
 
 color: A tuple containing the (R, G, B) values of the desired color.
-
-(Optional) fast_mode: Whether to use or not fast mode to draw the background. Fast mode simply draws a rectangle to fill the entire canvas, normal mode clears the entire image to a new one, which is more costly. It's only recommended you use normal mode if you are dealing with edges and can see outside of the background.
 
 ### EduDraw.circle(x: int, y: int, radius: int)
 
@@ -978,31 +1009,7 @@ def draw():
 
 ---
 
-### EduDraw.image(img: PIL.Image, x: int, y: int, x2=None, y2=None) 
-
-Draws an image onto the screen at the given position with a determined size. If no size is passed in, the image will have it's original size. This method is very costly depending on the resolution of the images used.
-
-Parameters:
-
-img: The image to be drawn onto the canvas.
-    
-x, y : The coordinates of the top left corner of the image.
-
-(Optional) x2, y2: The coordinates of the bottom right corner of the image. If left by default (None), images will have their original size, else, they'll be scaled to fit onto the box generated by the two corners.
-
-Examples:
-```
-img = PIL.Image.open("testimage.jpeg", 'r')
-
-def draw():
-    s.background((200, 200, 200))
-
-    s.image(img, 50, 50, 450, 450)
-```
-
-![image](https://user-images.githubusercontent.com/88753590/233815229-cc8f4911-005d-44eb-92c3-eb2b4d4a3a16.png)
-
-### EduDraw.image_sized(img: PIL.Image, x: int, y: int, width: int = None, height: int = None)
+### EduDraw.image(img: pygame.surface.Surface, x: int, y: int, width: int = None, height: int = None):
     
 Displays an image onto the screen on the (x,y) position. If specified a width or height, the image will be resized to those sizes, otherwise, the image will be drawn to it's original size.
     
@@ -1013,6 +1020,22 @@ img: The image to be drawn onto the canvas
 x, y: The position to draw the image
     
 (Optional) width, height: The sizes to set the image to
+
+```
+my_image = pygame.image.load('testimage.jpeg')
+
+def setup():
+    pass
+
+def draw():
+    s.fill((255, 255, 255))
+    s.background((0, 0, 0))
+    s.rect_mode("CENTER")
+    s.image(my_image, s.width // 2, s.height // 2, s.width // 2, s.height // 2)
+```
+
+![img](https://github.com/MuriloLCN/Edu-Draw-Python/assets/88753590/4dba8d75-7061-469d-a5fc-851908eb6d0f)
+
 
 ### EduDraw.frame_rate(fps: int)
 
@@ -1036,24 +1059,74 @@ Quits the simulation.
 
 ### Null mode
 
-Just like the C# version, you can use an instance of the EduDraw class without canvas to make a drawing inside of a drawing.
-For more details, check the C# section about it.
+Null mode is a mode in which you can run an instance of a simulation without having it running directly onto the canvas. You can do this for many reasons, including using EduDraw in a different context or application, creating multiple drawings inside of one another, among other things.
 
-Note, however, that due to the way Pygame screens work, the final window size will be that of the last instance declared, so in order for your main drawing to have it's intended size, make sure to declare it last.
+To initialize an EduDraw instance in null mode, you can use the optional parameter for it in the `start()` method.
 
-Example:
+Example of null mode:
 
 ```
-# Good example
-inner_drawing = EduDraw(300, 300)
-main_drawing = EduDraw(600, 600)
+s = EduDraw(500, 500) # Main instance
+d = EduDraw(250, 250, True) # Null mode ('inner') instance
 
-# Screen created will have 600x600 size, as intended
+def setup():
+  {...}
 
-# Bad example
-inner_drawing_1 = EduDraw(200, 200)
-main_drawing = EduDraw(600, 600)
-inner_drawing_2 = EduDraw(300, 450)
+def draw():
+  {...}
 
-# Screen created will have 300x450 size, while the main drawing was intended to have it's size as 600x600
+def inner_setup():
+  {...}
+
+def inner_draw():
+  {...}
+  
+s.start(setup, draw, "My window title")
+d.start(inner_setup, inner_draw, "This text is not shown")
 ```
+
+In order to be able to visualize instance of null mode, you'll have to retrieve the images (`pygame.surface.Surface`) and use those in your drawing or any other desired output (whether that be an icon, a display, a file, etc.).
+
+You can retrieve the images with the `EduDraw.screen` variable. With that Surface object retrieved, you can use it wherever it's necessary, and you have much more flexibility for what to do with it.
+
+A good example of this is to run two instances of EduDraw, one normal and one null, and use the retrieved images from the null instance as an argument for EduDraw.image(), essentially creating a drawing inside of a drawing, like the example below:
+
+```
+s = EduDraw(200, 200)
+d = EduDraw(100, 100, True)
+
+position = [d.width/2, d.height//2]
+velocity = [3, 4]
+
+# We don't need to setup anything in this case
+def setup():
+    pass
+
+def inner_drawing():
+    global position, velocity
+    if position[0] < 0 or position[0] > d.width:
+        velocity[0] *= -1
+
+    if position[1] < 0 or position[1] > d.height:
+        velocity[1] *= -1
+
+    position[0] += velocity[0]
+    position[1] += velocity[1]
+
+    d.fill((255, 0, 0))
+    d.stroke((0, 0, 255))
+    d.circle(position[0], position[1], 5)
+
+def draw():
+    s.background((200, 200, 200))
+    s.rotate(s.frame_count)
+    s.rect_mode("CENTER")
+    s.translate(s.width // 2, s.height // 2)
+    s.image(d.screen, 0, 0)
+    
+d.start(setup, inner_drawing, "This does not appear")
+s.start(setup, draw, "My drawing :D")
+```
+
+![nullmode](https://github.com/MuriloLCN/Edu-Draw-Python/assets/88753590/5026c565-f081-49cf-8bfd-55fe487bada6)
+
