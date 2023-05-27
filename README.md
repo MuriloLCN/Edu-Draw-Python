@@ -25,7 +25,7 @@ The only requirement for this library is `pygame==2.1.2`.
 
 You can do this by adding this to your imports:
 
-    from EduDraw import EduDraw
+    from EduDraw import edudraw
 
 Make sure the file is in the same directory as the file from which you are using it from or that you properly add the path otherwise.
 
@@ -34,7 +34,7 @@ Make sure the file is in the same directory as the file from which you are using
 This can be done by simply creating a new EduDraw instance like this:
     
     width, height = 500, 500  # Any size you want
-    s = EduDraw(width, height)
+    s = edudraw.EduDraw(width, height)
     
 #### 4. Create a ```setup()``` and a ```draw()``` function
 
@@ -50,7 +50,7 @@ You need to pass the ```setup()``` and ```draw()``` functions you made, and also
 The general structure of your form code may look something like this:
 
 ```
-from EduDraw import EduDraw
+from EduDraw import edudraw
 
 def setup():
     # Setting up goes here...
@@ -58,7 +58,7 @@ def setup():
 def draw():
     # Drawing goes here...
 
-s = EduDraw(500, 500)
+s = edudraw.EduDraw(500, 500)
 s.start(setup, draw, "My cool window")
 ```
 
@@ -69,9 +69,9 @@ And now you're ready to get onto some drawings :D
 Now that you have your canvas ready for the show, it's time to actually draw something on the screen. To begin with,let's draw a circle on the screen with a white background. Our code might look something like this:
 
 ```
-from EduDraw import EduDraw
+from EduDraw import edudraw
 
-s = EduDraw(500, 300)
+s = edudraw.EduDraw(500, 300)
 
 def setup():
     pass
@@ -93,9 +93,9 @@ And our canvas looks like this:
 That's our circle! But this is not very interesting, so let's give it a red filling color, a blue outline and make it move around.
 
 ```
-from EduDraw import EduDraw
+from EduDraw import edudraw
 
-s = EduDraw(500, 300)
+s = edudraw.EduDraw(500, 300)
 
 
 def setup():
@@ -126,9 +126,9 @@ s.start(setup, draw, "My first drawing")
 Now we have a moving red ball :D, but it leaves the screen fairly quickly, so let's make it bounce around.
 
 ```
-from EduDraw import EduDraw
+from EduDraw import edudraw
 
-s = EduDraw(500, 300)
+s = edudraw.EduDraw(500, 300)
 
 width, height = 0, 0
 velocity = [5, 5]
@@ -1065,8 +1065,8 @@ To initialize an EduDraw instance in null mode, you can use the optional paramet
 Example of null mode:
 
 ```
-s = EduDraw(500, 500) # Main instance
-d = EduDraw(250, 250, True) # Null mode ('inner') instance
+s = edudraw.EduDraw(500, 500) # Main instance
+d = edudraw.EduDraw(250, 250, True) # Null mode ('inner') instance
 
 def setup():
   {...}
@@ -1091,8 +1091,8 @@ You can retrieve the images with the `EduDraw.screen` variable. With that Surfac
 A good example of this is to run two instances of EduDraw, one normal and one null, and use the retrieved images from the null instance as an argument for EduDraw.image(), essentially creating a drawing inside of a drawing, like the example below:
 
 ```
-s = EduDraw(200, 200)
-d = EduDraw(100, 100, True)
+s = edudraw.EduDraw(200, 200)
+d = edudraw.EduDraw(100, 100, True)
 
 position = [d.width/2, d.height//2]
 velocity = [3, 4]
