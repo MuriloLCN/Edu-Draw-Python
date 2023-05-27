@@ -148,10 +148,10 @@ def draw():
     s.fill((255, 0, 0))
     s.stroke((0, 0, 255))
 
-    if ball_position[1] < 0 or ball_position[1] + 42 > height:
+    if ball_position[1] < 24 or ball_position[1] + 24 > height:
         velocity[1] *= -1
 
-    if ball_position[0] < 0 or ball_position[0] + 42 > width:
+    if ball_position[0] < 24 or ball_position[0] + 24 > width:
         velocity[0] *= -1
 
     ball_position[0] += velocity[0]
