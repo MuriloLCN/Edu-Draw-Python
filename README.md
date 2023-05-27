@@ -10,23 +10,22 @@ The details of installation and documentation of the respective versions are bel
 
 ## Installation
 
-In order to use the Python version you can simply download the ```edudraw.py``` and import it in your code like any other library. You'll also need the requirements, which can be installed from the ```requirements.txt``` file.
+You can install the package using PIP by typing the following command: `pip install edudraw`, and import it in your code like any other library.
+You'll need the pygame library as well, in case it doesn't get automatically installed.
 
 ## Setting up
 
 In order to begin using the EduDraw class to make your drawings, you need to do a few steps first:
   
-#### 1. Install the requirements
+#### 1. Install the library and the requirements
 
-You need to install the requirements from the requirements file, you can do this by adding the file on your directory and running the following command:
+The only requirement for this library is `pygame==2.1.2`.
 
-    pip3 install -r requirements.txt
-
-#### 2. Import the implementation file
+#### 2. Import the library
 
 You can do this by adding this to your imports:
 
-    from edudraw import EduDraw
+    from EduDraw import EduDraw
 
 Make sure the file is in the same directory as the file from which you are using it from or that you properly add the path otherwise.
 
