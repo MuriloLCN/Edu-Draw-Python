@@ -963,7 +963,8 @@ class EduDraw:
 
         # self.current_graphics.polygon(points, fill_color, stroke_color, stroke_weight)
 
-    def image(self, img: pygame.surface.Surface, x: int, y: int, width: int = None, height: int = None):
+    def image(self, img: pygame.surface.Surface, x: int, y: int, width: int = None, height: int = None,
+              force_transparency: bool = False):
         """
         Displays an image onto the screen on the (x,y) position.
         If specified a width or height, the image will be resized to those sizes, otherwise, the image will be drawn
@@ -974,9 +975,15 @@ class EduDraw:
         :param y: The y coordinate of the top-left corner of the image
         :param width: (Optional) The width to resize the image
         :param height: (Optional) The height to resize the image
+        :param force_transparency: (Optional) Whether or not to force transparency on non-rgba images.
         """
 
         size = img.get_size()
+
+        if force_transparency:
+            intermediary_surface = pygame.surface.Surface(size, flags=pygame.SRCALPHA)
+            intermediary_surface.blit(img, (0, 0))
+            img = intermediary_surface
 
         data = self._get_data_object()
 

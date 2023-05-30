@@ -2,11 +2,11 @@ import gc
 
 import pygame.image
 
-from edudraw import EduDraw
+from src.EduDraw import edudraw
 import time
 
-s = EduDraw(500, 500)
-d = EduDraw(250, 250, True)
+s = edudraw.EduDraw(500, 500)
+d = edudraw.EduDraw(250, 250, True)
 
 flag_done = False
 tests = []
@@ -681,7 +681,7 @@ def test_polygon():
 tests.append(test_polygon)
 
 # Note: This is just a test picture, nothing special
-img = pygame.image.load("logo.png")
+img = pygame.image.load(r"Image\\path\\goes\\here")
 
 
 def test_image():
@@ -692,10 +692,12 @@ def test_image():
     s.rotate(s.frame_count)
     s.rect_mode("CENTER")
     s.translate(s.width // 2, s.height // 2)
-    s.image(img, 0, 0, 200, 200)
+    s.image(img, 0, 0, 200, 200, force_transparency=True)
 
     if s.frame_count > 60:
         flag_done = True
+
+
 
 
 tests.append(test_image)

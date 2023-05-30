@@ -1008,7 +1008,7 @@ def draw():
 
 ---
 
-### EduDraw.image(img: pygame.surface.Surface, x: int, y: int, width: int = None, height: int = None):
+### EduDraw.image(img: pygame.surface.Surface, x: int, y: int, width: int = None, height: int = None, force_transparency: bool = False):
     
 Displays an image onto the screen on the (x,y) position. If specified a width or height, the image will be resized to those sizes, otherwise, the image will be drawn to it's original size.
     
@@ -1019,6 +1019,8 @@ img: The image to be drawn onto the canvas
 x, y: The position to draw the image
     
 (Optional) width, height: The sizes to set the image to
+
+(Optional) force_transparency: Whether or not force transparency onto the image. See more details below:
 
 ```
 my_image = pygame.image.load('testimage.jpeg')
@@ -1035,6 +1037,11 @@ def draw():
 
 ![img](https://github.com/MuriloLCN/Edu-Draw-Python/assets/88753590/4dba8d75-7061-469d-a5fc-851908eb6d0f)
 
+Note that some images may not have transparency when transformed into `pygame.Surface` objects through the
+`pygame.image.load()` method. Should this be the case, like the one below, you can use the `force_transparency`
+parameter to force that.
+
+--Uploaded example image goes here--
 
 ### EduDraw.frame_rate(fps: int)
 
