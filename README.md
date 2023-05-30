@@ -1041,7 +1041,8 @@ Note that some images may not have transparency when transformed into `pygame.Su
 `pygame.image.load()` method. Should this be the case, like the one below, you can use the `force_transparency`
 parameter to force that.
 
---Uploaded example image goes here--
+![example](https://github.com/MuriloLCN/Edu-Draw-Python/assets/88753590/c350c788-3cc4-491e-94f9-67c1a7aa8a78)
+
 
 ### EduDraw.frame_rate(fps: int)
 
