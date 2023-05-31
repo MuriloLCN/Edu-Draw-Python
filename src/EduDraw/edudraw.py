@@ -1,4 +1,3 @@
-import gc
 import time
 import copy
 import math
@@ -55,7 +54,6 @@ class _RepeatTimer:
 
     def quit(self):
         self.flag = True
-        gc.collect()
 
 
 class _SimulationData:
@@ -171,7 +169,6 @@ class EduDraw:
         self.data = _SimulationData()
         self.data_stack = []
         self.data.custom_font_object = self.original_font_instance
-        gc.collect()
 
     def _proto_setup(self):
         self.setup()
@@ -190,8 +187,6 @@ class EduDraw:
 
         if not self.null_mode:
             pygame.display.update()
-
-        gc.collect()
 
         if self.reset_after_loop:
             self._reset_variables()
@@ -499,7 +494,6 @@ class EduDraw:
         """
         if len(self.data_stack) != 0:
             self.data_stack.pop()
-        gc.collect()
 
     def mouse_pos(self) -> tuple:
         """
@@ -711,6 +705,17 @@ class EduDraw:
         data.custom_font_object = font_object
 
     def change_default_font(self, new_font: str, font_size: int = 12, bold=False, italic=False, underline=False):
+        """
+        Changes the default font to be used when writing text. If you want to change the font only once
+        in your drawing, it's recommended that you use this method in setup() instead of using font() in
+        draw(), this is way better for performance.
+
+        :param new_font: The name of the new font to be used
+        :param font_size: The size of the font to be used
+        :param bold: Whether the font should be bold or not
+        :param italic: Whether the font should be italic or not
+        :param underline: Whether the font should have an underline or not
+        """
         font_path = pygame.font.match_font(new_font)
         font_object = pygame.font.Font(font_path, font_size)
 
@@ -740,7 +745,6 @@ class EduDraw:
         """
         data = self._get_data_object()
         data.custom_font_object = None
-        data.custom_font = False
 
     def background(self, color: tuple):
         """
@@ -784,9 +788,6 @@ class EduDraw:
 
         data = self._get_data_object()
 
-        width, height = self._apply_transformations_length(width, height)
-        width, height = int(width), int(height)
-
         if data.cumulative_rotation_angle == 0:
             has_rotation = False
         else:
@@ -795,6 +796,9 @@ class EduDraw:
         pos_x, pos_y = self._get_circle_box(x, y, width, height, has_rotation)
         pos_x, pos_y = self._apply_transformations_coords(pos_x, pos_y)
         pos_x, pos_y = int(pos_x), int(pos_y)
+
+        width, height = self._apply_transformations_length(width, height)
+        width, height = int(width), int(height)
 
         stroke_color, fill_color, stroke_weight = self._get_stroke_fill_and_weight()
 
@@ -961,8 +965,6 @@ class EduDraw:
             else:
                 pygame.draw.polygon(self.screen, stroke_color, points, stroke_weight)
 
-        # self.current_graphics.polygon(points, fill_color, stroke_color, stroke_weight)
-
     def image(self, img: pygame.surface.Surface, x: int, y: int, width: int = None, height: int = None,
               force_transparency: bool = False):
         """
@@ -998,10 +1000,10 @@ class EduDraw:
         if target_width == 0 or target_height == 0:
             return
 
-        if width < 0 or height < 0:
+        if target_width < 0 or target_height < 0:
             raise ValueError
 
-        img = pygame.transform.scale(img, (width, height))
+        img = pygame.transform.scale(img, (target_width, target_height))
         img = pygame.transform.rotate(img, -data.cumulative_rotation_angle)
 
         has_rotation = data.cumulative_rotation_angle != 0
@@ -1020,8 +1022,6 @@ class EduDraw:
             box = (int(x), int(y), real_w, real_h)
         else:
             box = (int(x - real_w//2), int(y - real_h//2), real_w, real_h)
-
-        # size = img.get_size()
 
         self.screen.blit(img, box)
 

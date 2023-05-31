@@ -16,7 +16,6 @@ start = time.time()
 
 antialias = False
 
-
 def pressed(data):
     global antialias
     antialias = not antialias
@@ -681,12 +680,13 @@ def test_polygon():
 tests.append(test_polygon)
 
 # Note: This is just a test picture, nothing special
-img = pygame.image.load(r"Image\\path\\goes\\here")
+img = pygame.image.load(r"C:\Users\Murilo Luis\Desktop\logo.png")
 
 
 def test_image():
     global flag_done
 
+    s.scale(0.75, 1.25)
     s.background((200, 200, 200))
     s.image(img, 50, 50, 200, 200)
     s.rotate(s.frame_count)
@@ -711,11 +711,8 @@ def test_null_mode():
     s.translate(s.width // 2, s.height // 2)
     s.image(d.screen, 0, 0)
 
-    if s.frame_count > 600:
-        s.quit()
-        d.quit()
-        return
-    pass
+    if s.frame_count > 150:
+        flag_done = True
 
 
 # tests.append(test_null_mode)
