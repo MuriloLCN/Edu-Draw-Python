@@ -497,9 +497,9 @@ def draw():
 
     s.square(75, 75, 75)
 
-    s.stroke((0, 255, 0))
+    s.fill((0, 255, 0))
     s.text(f"X: {mouse_x}", 10, 10)
-    s.stroke((255, 0, 0))
+    s.fill((255, 0, 0))
     s.text(f"Y: {mouse_y}", 10, 30)
 ```
 
