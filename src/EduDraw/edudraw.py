@@ -113,6 +113,9 @@ class _ControlClass:
 
     def event_handler(self, events):
         for event in events:
+            if event.type == pygame.ACTIVEEVENT:
+                if hasattr(event, 'state'):
+                    self.main_instance.focused = not event.state == 1
             if event.type == pygame.QUIT:
                 self.main_instance.quit()
                 return
@@ -135,13 +138,13 @@ class EduDraw:
 TODO List:
     - Done
         - Added sounds
-        - Add icon removal + icon changing
-        - Add hide cursor
+        - Added icon removal + icon changing
+        - Added hide cursor
+        - Added retrieve image
+        - Added focused window
+        - Added retrieve color from position
     - Not Done
-        - Add focused window
         - Add bezier curves
-        - Add retrieve image
-        - Add retrieve color from position
         - Add lerp color
         - Add arcs + options
 	    --- Open, pie & closed
@@ -170,6 +173,8 @@ TODO List:
         self.quitted = False
         self.reset_after_loop = True
         self.frame_count = 0
+
+        self.focused = True
 
         self.original_font_instance = None
 
@@ -1051,6 +1056,14 @@ TODO List:
         except pygame.error:
             pass
 
+    def retrieve_frame(self) -> pygame.surface.Surface:
+        """
+        Retrieves the current frame of the simulation as a pygame Surface image.
+
+        :return: The currently drawn frame from when this method was called.
+        """
+        return self.screen
+
     # Other methods -----------------------------------------------------------------------------------------------
     @staticmethod
     def load_sound(file: str) -> pygame.mixer.Sound:
@@ -1096,6 +1109,25 @@ TODO List:
         """
         new_image = pygame.surface.Surface((32, 32), flags=pygame.SRCALPHA)
         pygame.display.set_icon(new_image)
+
+    def get_color_from_pos(self, x: int, y: int) -> tuple:
+        """
+        Retrieves the color from a given position in the current frame
+
+        :param x: The x coordinate to retrieve the color from
+        :param y: The y coordinate to retrieve the color from
+        :return: A (r,g,b,a) tuple with the color at that position
+        """
+        return tuple(self.screen.get_at((x, y)))
+
+    def is_focused(self) -> bool:
+        """
+        Gets whether the display is focused or not.
+
+        :return: True if display is focused, False if not
+        """
+        if not self.null_mode:
+            return self.focused
 
     def set_mouse_visibility(self, visible: bool):
         """
