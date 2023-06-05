@@ -134,35 +134,19 @@ class EduDraw:
     """
 TODO List:
     - Done
-    - Not Done
-        - Add sounds
-            -- Should be simple, but I also need to think what helper functions I might need
+        - Added sounds
         - Add icon removal + icon changing
-            -- Should be simple
+    - Not Done
         - Add hide cursor
-            -- Need to look in the pygame docs
         - Add focused window
-            -- Need to look in the pygame docs
         - Add bezier curves
-            -- If there's no way to do them in pygame, I won't implement them
         - Add retrieve image
-            -- Trivial
         - Add retrieve color from position
-            -- Need to look in the pygame docs
         - Add lerp color
-            -- Just a bit of math
         - Add arcs + options
-            -- There's an option for arcs in pygame docs but it seems to miss some stuff, will have to figure those out
-               on my own
-	    -- Open, pie & closed
+	    --- Open, pie & closed
         - Add erase & no erase
-            -- Need more references from pygame docs to see if this is possible
-            -- Leave for last - should make all functions larger than they already are
         - Big update for documentation
-            -- This is really important, the docs need to be more polished
-        Comments:
-            It seems like lerp color should be simple to implement + it might be useful for finding a way to erase shapes.
-            Erasing shapes seems like it's going to be necessary for arcs.
     """
 
     def __init__(self, width: int, height: int, null_mode: bool = False):
@@ -262,6 +246,7 @@ TODO List:
         else:
             self.screen = pygame.display.set_mode((self.width, self.height))
             pygame.display.set_caption(window_title)
+            self.remove_icon()
 
         self._proto_setup()
         self._proto_draw()
@@ -1094,6 +1079,23 @@ TODO List:
             pygame.mixer.init()
 
         sound.play(loops=loops, maxtime=max_time, fade_ms=fade_time)
+
+    def change_icon(self, image: pygame.surface.Surface):
+        """
+        Changes icon to a user-defined image
+
+        :param image: The image to be used as icon
+        """
+        if not self.null_mode:
+            pygame.display.set_icon(image)
+
+    @staticmethod
+    def remove_icon():
+        """
+        Removes pygame icon from window
+        """
+        new_image = pygame.surface.Surface((32, 32), flags=pygame.SRCALPHA)
+        pygame.display.set_icon(new_image)
 
     def frame_rate(self, fps: int):
         """
