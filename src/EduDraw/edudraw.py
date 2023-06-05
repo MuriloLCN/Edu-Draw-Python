@@ -49,7 +49,7 @@ class _RepeatTimer:
             else:
                 self.func()
 
-            if self.interval > 0.005:
+            if self.interval != 0:
                 time.sleep(self.interval)
 
     def quit(self):
@@ -131,6 +131,40 @@ class _ControlClass:
 
 
 class EduDraw:
+    """
+TODO List:
+    - Done
+    - Not Done
+        - Add sounds
+            -- Should be simple, but I also need to think what helper functions I might need
+        - Add icon removal + icon changing
+            -- Should be simple
+        - Add hide cursor
+            -- Need to look in the pygame docs
+        - Add focused window
+            -- Need to look in the pygame docs
+        - Add bezier curves
+            -- If there's no way to do them in pygame, I won't implement them
+        - Add retrieve image
+            -- Trivial
+        - Add retrieve color from position
+            -- Need to look in the pygame docs
+        - Add lerp color
+            -- Just a bit of math
+        - Add arcs + options
+            -- There's an option for arcs in pygame docs but it seems to miss some stuff, will have to figure those out
+               on my own
+	    -- Open, pie & closed
+        - Add erase & no erase
+            -- Need more references from pygame docs to see if this is possible
+            -- Leave for last - should make all functions larger than they already are
+        - Big update for documentation
+            -- This is really important, the docs need to be more polished
+        Comments:
+            It seems like lerp color should be simple to implement + it might be useful for finding a way to erase shapes.
+            Erasing shapes seems like it's going to be necessary for arcs.
+    """
+
     def __init__(self, width: int, height: int, null_mode: bool = False):
         global _instance_handler
         self.width = width
@@ -837,7 +871,11 @@ class EduDraw:
         new_surface = pygame.transform.rotate(new_surface, -data.cumulative_rotation_angle)
 
         new_width, new_height = new_surface.get_size()
-        self.screen.blit(new_surface, (int(pos_x - new_width / 2), int(pos_y - new_height / 2)))
+
+        try:
+            self.screen.blit(new_surface, (int(pos_x - new_width / 2), int(pos_y - new_height / 2)))
+        except pygame.error:
+            pass
 
     def line(self, x1: int, y1: int, x2: int, y2: int):
         """
@@ -1023,7 +1061,39 @@ class EduDraw:
         else:
             box = (int(x - real_w//2), int(y - real_h//2), real_w, real_h)
 
-        self.screen.blit(img, box)
+        try:
+            self.screen.blit(img, box)
+        except pygame.error:
+            pass
+
+    # Other methods -----------------------------------------------------------------------------------------------
+    @staticmethod
+    def load_sound(file: str) -> pygame.mixer.Sound:
+        """
+        Creates a new pygame.mixer.Sound instance from a file
+
+        :param file: The file to load the sound from
+        :return: A created pygame.mixer.Sound instance
+        """
+        if not pygame.mixer.get_init():
+            pygame.mixer.init()
+
+        return pygame.mixer.Sound(file=file)
+
+    @staticmethod
+    def play_sound(sound: pygame.mixer.Sound, loops: int = 0, max_time: int = 0, fade_time: int = 0):
+        """
+        Plays a sound
+
+        :param sound: The sound to be played
+        :param loops: The amount of times to loop the audio
+        :param max_time: The maximum time (in ms) to play the audio
+        :param fade_time: The fading time (in ms) of the audio
+        """
+        if not pygame.mixer.get_init():
+            pygame.mixer.init()
+
+        sound.play(loops=loops, maxtime=max_time, fade_ms=fade_time)
 
     def frame_rate(self, fps: int):
         """

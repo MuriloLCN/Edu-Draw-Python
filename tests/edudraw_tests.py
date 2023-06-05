@@ -5,7 +5,7 @@ import pygame.image
 from src.EduDraw import edudraw
 import time
 
-s = edudraw.EduDraw(500, 500)
+s = edudraw.EduDraw(500, 500, False)
 d = edudraw.EduDraw(250, 250, True)
 
 flag_done = False
@@ -16,12 +16,16 @@ start = time.time()
 
 antialias = False
 
+# Note: This is just a test picture, nothing special
+img = pygame.image.load(r"C:\Users\Murilo Luis\Desktop\logo.png")
+
 def pressed(data):
     global antialias
     antialias = not antialias
 
 
 def setup():
+    s.deltatime = 0
     s.set_controls(key_down=pressed)
 
 flag_has_null = False
@@ -40,6 +44,7 @@ def draw():
             s.quit()
             end = time.time()
             print(f"Test done: {str(test_null_mode)}, Elapsed time: {end - start}, Avg. FPS: {s.frame_count / (end - start)}")
+            print(f"Avg. fps for inner instance: {d.frame_count / (end - start)}")
             print("All tests done.")
             return
         else:
@@ -67,7 +72,6 @@ def dummy():
 position = [d.width/2, d.height//2]
 velocity = [3, 4]
 def inner_drawing():
-    # d.background((200, 200, 200))
     global position, velocity
     if position[0] < 0 or position[0] > d.width:
         velocity[0] *= -1
@@ -81,6 +85,9 @@ def inner_drawing():
     d.fill((255, 0, 0))
     d.stroke((0, 0, 255))
     d.circle(position[0], position[1], 5)
+
+    d.rect_mode('CENTER')
+    d.image(img, d.width // 2, s.height // 2, d.width // 2, s.height // 2, True)
 
 
 def test_rect_mode():
@@ -679,9 +686,6 @@ def test_polygon():
 
 tests.append(test_polygon)
 
-# Note: This is just a test picture, nothing special
-img = pygame.image.load(r"C:\Users\Murilo Luis\Desktop\logo.png")
-
 
 def test_image():
     global flag_done
@@ -696,8 +700,6 @@ def test_image():
 
     if s.frame_count > 60:
         flag_done = True
-
-
 
 
 tests.append(test_image)
