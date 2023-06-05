@@ -136,8 +136,8 @@ TODO List:
     - Done
         - Added sounds
         - Add icon removal + icon changing
-    - Not Done
         - Add hide cursor
+    - Not Done
         - Add focused window
         - Add bezier curves
         - Add retrieve image
@@ -1096,6 +1096,15 @@ TODO List:
         """
         new_image = pygame.surface.Surface((32, 32), flags=pygame.SRCALPHA)
         pygame.display.set_icon(new_image)
+
+    def set_mouse_visibility(self, visible: bool):
+        """
+        Changes the visibility of the cursor
+
+        :param visible: Whether the mouse should be visible or hidden
+        """
+        if not self.null_mode:
+            pygame.mouse.set_visible(visible)
 
     def frame_rate(self, fps: int):
         """
