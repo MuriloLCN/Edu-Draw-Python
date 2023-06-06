@@ -711,10 +711,32 @@ def test_null_mode():
     s.rotate(s.frame_count)
     s.rect_mode("CENTER")
     s.translate(s.width // 2, s.height // 2)
-    s.image(d.screen, 0, 0)
+    s.image(d.retrieve_frame(), 0, 0)
 
     if s.frame_count > 150:
         flag_done = True
+
+
+control_points = [(100, 100), (150, 500), (450, 500), (500, 150)]
+
+
+def test_bezier():
+    global flag_done
+    s.background((255, 255, 255))
+    s.stroke((255, 0, 0))
+    s.stroke_weight(3)
+    s.bezier_curve(control_points, s.frame_count)
+
+    s.stroke((0, 0, 255))
+    s.fill((0, 0, 255))
+    for point in control_points:
+        s.circle(point[0], point[1], 5)
+
+    if s.frame_count > 150:
+        flag_done = True
+
+
+tests.append(test_bezier)
 
 
 # tests.append(test_null_mode)

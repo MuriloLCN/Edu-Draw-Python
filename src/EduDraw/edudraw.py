@@ -141,16 +141,15 @@ TODO List:
         - Added icon removal + icon changing
         - Added focused window
         - Added retrieve color from position
-    - Need testing
         - Add bezier curves
         - Added hide cursor
         - Added retrieve image
-    - Not Done
+    - Need testing
         - Add lerp color
-        - Add arcs + options
-	    --- Open, pie & closed
-        - Add erase & no erase
+    - Not Done
+        - Add arcs + options (Open, pie & closed)
         - Big update for documentation
+        - Add erase & no erase
     """
 
     def __init__(self, width: int, height: int, null_mode: bool = False):
@@ -383,13 +382,16 @@ TODO List:
 
         data = self._get_data_object()
 
-        scale_tf = data.transformations['SCL']
+        # scale_tf = data.transformations['SCL']
 
-        for transformation in data.applied_transformations:
-            # Sizes are only affected by scaling
-            if transformation[0] == scale_tf:
-                final_width *= transformation[1][0]
-                final_height *= transformation[1][1]
+        final_width *= data.cumulative_scaling_factor[0]
+        final_height *= data.cumulative_scaling_factor[1]
+
+        # for transformation in data.applied_transformations:
+        #     # Sizes are only affected by scaling
+        #     if transformation[0] == scale_tf:
+        #         final_width *= transformation[1][0]
+        #         final_height *= transformation[1][1]
 
         return final_width, final_height
 
@@ -435,6 +437,10 @@ TODO List:
         """
         Function found at: https://www.pygame.org/wiki/BezierCurve
         Credits: Victor Blomqvist, 2007
+
+        Computes the points to be used when drawing a bezier curve
+        :param vertices: The control points to be used for the curve. Needs at least 4
+        :param num_points: The number of points to be used as steps. Higher numbers make a more rounded shape.
         """
 
         if num_points is None:
@@ -1198,9 +1204,50 @@ TODO List:
             pygame.display.set_icon(image)
 
     @staticmethod
+    def lerp_color(color_1: tuple, color_2: tuple, amount: float = 0.5) -> tuple:
+        """
+        Mixes two color to find an intermediary color between them
+
+        :param color_1: The color to lerp from
+        :param color_2: The color to lerp to
+        :param amount: How close the resulting color should be to the two colors to be mixed. 0.5 makes it an average.
+        """
+
+        iterations = 4
+        result = [0, 0, 0, 255]
+
+        if len(color_1) == 3 and len(color_2) == 3:
+            iterations = 3
+            result = [0, 0, 0]
+
+        else:
+            if len(color_1) == 3:
+                color_1 = list(color_1)
+                color_1.append(255)
+                color_1 = tuple(color_1)
+
+            if len(color_2) == 3:
+                color_2 = list(color_2)
+                color_2.append(255)
+                color_2 = tuple(color_2)
+
+        for i in range(iterations):
+            difference = color_2[i] - color_1[i]
+            difference *= amount
+            result[i] = int(color_1[i] + difference)
+
+            if result[i] < 0:
+                result[i] = 0
+
+            if result[i] > 255:
+                result[i] = 255
+
+        return tuple(result)
+
+    @staticmethod
     def remove_icon():
         """
-        Removes pygame icon from window
+        Removes icon from window
         """
         new_image = pygame.surface.Surface((32, 32), flags=pygame.SRCALPHA)
         pygame.display.set_icon(new_image)
