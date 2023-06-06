@@ -139,12 +139,13 @@ TODO List:
     - Done
         - Added sounds
         - Added icon removal + icon changing
-        - Added hide cursor
-        - Added retrieve image
         - Added focused window
         - Added retrieve color from position
-    - Not Done
+    - Need testing
         - Add bezier curves
+        - Added hide cursor
+        - Added retrieve image
+    - Not Done
         - Add lerp color
         - Add arcs + options
 	    --- Open, pie & closed
@@ -428,6 +429,77 @@ TODO List:
                 final_y = y
 
         return final_x, final_y
+
+    @staticmethod
+    def _compute_bezier_points(vertices: list, num_points: int = None):
+        """
+        Function found at: https://www.pygame.org/wiki/BezierCurve
+        Credits: Victor Blomqvist, 2007
+        """
+
+        if num_points is None:
+            num_points = 30
+
+        if num_points <= 2 or len(vertices) != 4:
+            return None
+
+        result = []
+
+        b0x = vertices[0][0]
+        b0y = vertices[0][1]
+        b1x = vertices[1][0]
+        b1y = vertices[1][1]
+        b2x = vertices[2][0]
+        b2y = vertices[2][1]
+        b3x = vertices[3][0]
+        b3y = vertices[3][1]
+
+        # Compute polynomial coefficients from Bezier points
+        ax = -b0x + 3 * b1x + -3 * b2x + b3x
+        ay = -b0y + 3 * b1y + -3 * b2y + b3y
+
+        bx = 3 * b0x + -6 * b1x + 3 * b2x
+        by = 3 * b0y + -6 * b1y + 3 * b2y
+
+        cx = -3 * b0x + 3 * b1x
+        cy = -3 * b0y + 3 * b1y
+
+        dx = b0x
+        dy = b0y
+
+        # Set up the number of steps and step size
+        num_steps = num_points - 1  # arbitrary choice
+        h = 1.0 / num_steps  # compute our step size
+
+        # Compute forward differences from Bezier points and "h"
+        point_x = dx
+        point_y = dy
+
+        first_fdx = ax * (h * h * h) + bx * (h * h) + cx * h
+        first_fdy = ay * (h * h * h) + by * (h * h) + cy * h
+
+        second_fdx = 6 * ax * (h * h * h) + 2 * bx * (h * h)
+        second_fdy = 6 * ay * (h * h * h) + 2 * by * (h * h)
+
+        third_fdx = 6 * ax * (h * h * h)
+        third_fdy = 6 * ay * (h * h * h)
+
+        # Compute points at each step
+        result.append((int(point_x), int(point_y)))
+
+        for i in range(num_steps):
+            point_x += first_fdx
+            point_y += first_fdy
+
+            first_fdx += second_fdx
+            first_fdy += second_fdy
+
+            second_fdx += third_fdx
+            second_fdy += third_fdy
+
+            result.append((int(point_x), int(point_y)))
+
+        return result
 
     # State methods --------------------------------------------------------------------------------------
 
@@ -1056,13 +1128,28 @@ TODO List:
         except pygame.error:
             pass
 
-    def retrieve_frame(self) -> pygame.surface.Surface:
+    def bezier_curve(self, control_points: list, num_points: int | None = None):
         """
-        Retrieves the current frame of the simulation as a pygame Surface image.
+        Draws a bezier curve from a set of control points
 
-        :return: The currently drawn frame from when this method was called.
+        :param control_points: A list of tuples containing the coordinates of the control points for the curve
+        :param num_points: The number of points to be used as steps for the lines. Default: 30
         """
-        return self.screen
+        data = self._get_data_object()
+
+        b_points = self._compute_bezier_points(control_points, num_points)
+
+        if b_points is None:
+            return
+
+        for i, elem in enumerate(b_points):
+            new_point = self._apply_transformations_coords(elem[0], elem[1])
+            b_points[i] = new_point
+
+        stroke_color, fill_color, stroke_weight = self._get_stroke_fill_and_weight()
+
+        if data.stroke_state:
+            pygame.draw.lines(self.screen, stroke_color, False, b_points, stroke_weight)
 
     # Other methods -----------------------------------------------------------------------------------------------
     @staticmethod
@@ -1092,6 +1179,14 @@ TODO List:
             pygame.mixer.init()
 
         sound.play(loops=loops, maxtime=max_time, fade_ms=fade_time)
+
+    def retrieve_frame(self) -> pygame.surface.Surface:
+        """
+        Retrieves the current frame of the simulation as a pygame Surface image.
+
+        :return: The currently drawn frame from when this method was called.
+        """
+        return self.screen
 
     def change_icon(self, image: pygame.surface.Surface):
         """
