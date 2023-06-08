@@ -82,6 +82,8 @@ class _SimulationData:
         self.current_background_color = (125, 125, 125)
         self.current_stroke_weight = 1
 
+        self.erase_state = False
+
         self.anti_aliasing = False
 
         self.fill_state = True
@@ -144,12 +146,13 @@ TODO List:
         - Add bezier curves
         - Added hide cursor
         - Added retrieve image
+        - Added lerp color
     - Need testing
-        - Add lerp color
-    - Not Done
-        - Add arcs + options (Open, pie & closed)
-        - Big update for documentation
         - Add erase & no erase
+        - Add open arc
+    - Not Done
+        - Add arcs (pie & closed)
+        - Big update for documentation
     """
 
     def __init__(self, width: int, height: int, null_mode: bool = False):
@@ -324,6 +327,10 @@ TODO List:
         stroke_color = data.current_stroke_color
         fill_color = data.current_fill_color
         stroke_weight = data.current_stroke_weight
+
+        if data.erase_state:
+            stroke_color = data.current_background_color
+            fill_color = data.current_background_color
 
         if not data.stroke_state:
             stroke_color = None
@@ -739,6 +746,17 @@ TODO List:
 
         data.anti_aliasing = not data.anti_aliasing
 
+    def erase(self):
+        """
+        Makes all drawings erase from the canvas (i.e, their color will be the current background color)
+        """
+        self._get_data_object().erase_state = True
+
+    def no_erase(self):
+        """
+        Stops erasing shapes
+        """
+        self._get_data_object().erase_state = False
     # Draw methods --------------------------------------------------------------------------------------
 
     def point(self, x: int, y: int):
@@ -1156,6 +1174,81 @@ TODO List:
 
         if data.stroke_state:
             pygame.draw.lines(self.screen, stroke_color, False, b_points, stroke_weight)
+
+    def arc_open(self, start_angle: int, stop_angle: int, x: int, y: int, width: int, height: int):
+        """
+        Draws an open arc onto the canvas.
+
+        :param start_angle: The starting angle (in degrees) of the arc
+        :param stop_angle: The stopping angle (in degrees) of the arc
+        :param x: The x coordinate to draw the arc, if circle mode is top_left, it's the top left of the rectangle
+        containing the ellipse, else it's the center of the ellipse
+        :param y: The y coordinate to draw the arc
+        :param width: The width of the ellipse to create the arc
+        :param height: The height of the ellipse to create the arc
+        """
+        data = self._get_data_object()
+        color = data.current_stroke_color
+
+        if data.cumulative_rotation_angle == 0:
+            has_rotation = False
+        else:
+            has_rotation = True
+
+        pos_x, pos_y = self._get_circle_box(x, y, width, height, has_rotation)
+        pos_x, pos_y = self._apply_transformations_coords(pos_x, pos_y)
+        pos_x, pos_y = int(pos_x), int(pos_y)
+
+        width, height = self._apply_transformations_length(width, height)
+        width, height = int(width), int(height)
+
+        # Circles and non-slanted ellipses have simple drawings
+        if width == height or not has_rotation:
+            stop_angle -= data.cumulative_rotation_angle
+            start_angle -= data.cumulative_rotation_angle
+
+            start_angle = math.radians(start_angle)
+            stop_angle = math.radians(stop_angle)
+
+            pos_x -= width//2
+            pos_y -= height//2
+
+            pygame.draw.arc(self.screen, color, (pos_x, pos_y, width, height), start_angle,
+                            stop_angle, data.current_stroke_weight)
+            return
+
+        start_angle = math.radians(start_angle)
+        stop_angle = math.radians(stop_angle)
+
+        new_surface = pygame.surface.Surface((width + 1, height + 1), pygame.SRCALPHA)
+
+        pygame.draw.arc(new_surface, color, (0, 0, width + 1, height + 1), start_angle, stop_angle,
+                        data.current_stroke_weight)
+
+        new_surface = pygame.transform.rotate(new_surface, -data.cumulative_rotation_angle)
+
+        new_width, new_height = new_surface.get_size()
+
+        try:
+            self.screen.blit(new_surface, (int(pos_x - new_width / 2), int(pos_y - new_height / 2)))
+        except pygame.error:
+            pass
+
+    def arc_pie(self, start_angle: int, stop_angle: int, x: int, y: int, width: int, height: int):
+        # Planning:
+        # Create a new image with colorkey as the background color
+        # Draw an ellipse with the desired parameters
+        # Draw an polygon from the following points with the background color:
+        # > Center of the ellipse
+        # > Extension of the starting angle to the edge of the image
+        # > Extension of the ending angle to the edge of the image
+        # > All corners of the image not seen by the angle sweep
+        # Redraw lines to center
+        pass
+
+    def arc_closed(self):
+        # Should be the same as arc_pie with the difference that the erasing polygon should not have the center point
+        pass
 
     # Other methods -----------------------------------------------------------------------------------------------
     @staticmethod
