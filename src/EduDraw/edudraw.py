@@ -150,8 +150,10 @@ TODO List:
     - Need testing
         - Add erase & no erase
         - Add open arc
+        - Add pie arcs
     - Not Done
-        - Add arcs (pie & closed)
+        - Add arcs (closed)
+        - Add more function docs
         - Big update for documentation
     """
 
@@ -1235,7 +1237,15 @@ TODO List:
             pass
 
     @staticmethod
-    def _get_intersection_arc_edge(angle: int, width: int, height: int):
+    def _get_intersection_arc_edge(angle: int, width: int, height: int) -> tuple:
+        """
+        Gets the intersection of an angle in an ellipse with the rectangle containing said ellipse.
+
+        :param angle: The angle to get the intersection from
+        :param width: The width of the rectangle containing the ellipse
+        :param height: The height of the rectangle containing the ellipse
+        :return: The (x, y) coordinates of the intersection
+        """
         if angle == 0:
             return width, height//2
 
@@ -1297,11 +1307,60 @@ TODO List:
                 return width//2 + d_w, height
 
     @staticmethod
+    def _get_intersection_angle_ellipse(angle: int, width: int, height: int) -> tuple:
+        """
+        Finds the intersection of an angle with the circumference of an ellipse
+        Got the formulas from here: https://math.stackexchange.com/q/22068
+
+        :param angle: The angle to find the intersection
+        :param width: The width of the rectangle containing the ellipse
+        :param height: The height of the rectangle containing the ellipse
+        :return: The intersection of the angle with the circumference
+        """
+
+        if angle < 0:
+            angle += 360
+        # Cases where tg(x) is undefined
+        if angle == 0:
+            return width, height//2
+        if angle == 90:
+            return width//2, height
+        if angle == 180:
+            return 0, height//2
+        if angle == 270:
+            return width//2, 0
+
+        tg_angle = math.tan(math.radians(angle))
+        a = width // 2
+        b = height // 2
+        denominator = math.sqrt(b * b + a * a * tg_angle * tg_angle)
+        x_numerator = a * b
+        x = x_numerator / denominator
+        y_numerator = a * b * tg_angle
+        y = y_numerator / denominator
+        if 90 < angle < 270:
+            return -x + a, -y + b
+        else:
+            return x + a, y + b
+
+    @staticmethod
     def _sorting_keys(e):
+        """ Dummy function to help sorting """
         return e[0]
 
-    def arc_pie(self, start_angle: int, stop_angle: int, x: int, y: int, width: int, height: int):
+    def arc_pie(self, start_angle: int, stop_angle: int, x: int, y: int, width: int, height: int,
+                close_edges: bool = True):
+        """
+        Draws a pie-like arc in a counter-clockwise direction from the starting angle up to the stopping angle.
 
+        :param start_angle: The starting angle to draw the pie.
+        :param stop_angle: The angle to stop the pie
+        :param x: The x coordinate to draw the ellipse of the pie
+        :param y: The y coordinate to draw the ellipse of the pie
+        :param width: The horizontal diameter of the ellipse
+        :param height: The vertical diameter of the ellipse
+        :param close_edges: Whether the lines from the edges of the pie should be drawn. Default: True
+        """
         if abs(start_angle) >= 360:
             start_angle = start_angle % 360
 
@@ -1395,7 +1454,12 @@ TODO List:
 
         pygame.draw.polygon(new_image, data.current_background_color, sorted_points, 0)
 
-        # Todo: Draw lines to close pie
+        if close_edges:
+            point_start = self._get_intersection_angle_ellipse(-start_angle, width, height)
+            point_stop = self._get_intersection_angle_ellipse(-stop_angle, width, height)
+
+            pygame.draw.line(new_image, stroke_color, (width//2, height//2), point_start, stroke_weight)
+            pygame.draw.line(new_image, stroke_color, (width//2, height//2), point_stop, stroke_weight)
 
         new_image = pygame.transform.rotate(new_image, -data.cumulative_rotation_angle)
 

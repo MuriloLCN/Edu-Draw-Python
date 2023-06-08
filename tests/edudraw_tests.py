@@ -745,7 +745,7 @@ def test_pie():
     s.rect(0, 0, s.width, s.height)
     s.line(0, 0, s.width//2, s.height//2)
     s.stroke_weight(3)
-    # s.circle_mode("TOP_LEFT")
+    s.circle_mode("TOP_LEFT")
     s.fill((255, 0, 0))
     s.stroke((0, 0, 255))
     s.arc_pie(s.frame_count + 150, s.frame_count * 2, 0, 0, s.width//2, s.height//2)
