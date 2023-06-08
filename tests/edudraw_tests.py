@@ -25,6 +25,7 @@ def pressed(data):
 
 
 def setup():
+    # s.frame_rate(20)
     s.deltatime = 0
     s.set_controls(key_down=pressed)
 
@@ -740,9 +741,14 @@ tests.append(test_bezier)
 
 def test_pie():
     s.background((200, 200, 200))
+    s.fill((0, 0, 0))
+    s.rect(0, 0, s.width, s.height)
+    s.line(0, 0, s.width//2, s.height//2)
+    s.stroke_weight(3)
+    # s.circle_mode("TOP_LEFT")
     s.fill((255, 0, 0))
     s.stroke((0, 0, 255))
-    s.arc_pie(s.frame_count, s.frame_count * 2, s.width//2, s.height//2, s.width//2, s.height//2)
+    s.arc_pie(s.frame_count + 150, s.frame_count * 2, 0, 0, s.width//2, s.height//2)
     # s.arc_pie(243, 126, s.width//2, s.height//2, s.width//2, s.height//2)
     # print(s.frame_count)
 

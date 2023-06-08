@@ -1308,6 +1308,9 @@ TODO List:
         if abs(stop_angle) >= 360:
             stop_angle = stop_angle % 360
 
+        if start_angle == stop_angle:
+            return
+
         inverted = False
         if start_angle > stop_angle:
             inverted = True
@@ -1315,12 +1318,7 @@ TODO List:
         stroke_color, fill_color, stroke_weight = self._get_stroke_fill_and_weight()
         data = self._get_data_object()
 
-        if data.cumulative_rotation_angle == 0:
-            has_rotation = False
-        else:
-            has_rotation = True
-
-        pos_x, pos_y = self._get_circle_box(x, y, width, height, has_rotation)
+        pos_x, pos_y = self._get_circle_box(x, y, width, height, True)
         pos_x, pos_y = self._apply_transformations_coords(pos_x, pos_y)
         pos_x, pos_y = int(pos_x), int(pos_y)
 
@@ -1328,7 +1326,6 @@ TODO List:
         width, height = int(width), int(height)
 
         new_image = pygame.surface.Surface((width + 1, height + 1), flags=pygame.SRCALPHA)
-        new_image.set_colorkey(data.current_background_color)
 
         # Drawing ellipse
         if data.anti_aliasing:
@@ -1355,26 +1352,31 @@ TODO List:
         angle_bottom_left = 180 + theta
         angle_bottom_right = 360 - theta
 
-        # TODO: Fix 360 wrapping issue
-        if (not ((start_angle < angle_top_right < stop_angle) and not inverted)) or (
-                (start_angle < angle_top_right < stop_angle) and inverted):
-            # if not (start_angle < angle_top_right < stop_angle):
-            unsorted_points.append((angle_top_right, (width, 0)))
+        if inverted:
+            if start_angle > angle_top_right > stop_angle:
+                unsorted_points.append((angle_top_right, (width, 0)))
 
-        if (not ((start_angle < angle_top_left < stop_angle) and not inverted)) or (
-                (start_angle < angle_top_left < stop_angle) and inverted):
-            # if not (start_angle < angle_top_left < stop_angle):
-            unsorted_points.append((angle_top_left, (0, 0)))
+            if start_angle > angle_top_left > stop_angle:
+                unsorted_points.append((angle_top_left, (0, 0)))
 
-        if (not ((start_angle < angle_bottom_left < stop_angle) and not inverted)) or (
-                (start_angle < angle_bottom_left < stop_angle) and inverted):
-            # if not (start_angle < angle_bottom_left < stop_angle):
-            unsorted_points.append((angle_bottom_left, (0, height)))
+            if start_angle > angle_bottom_left > stop_angle:
+                unsorted_points.append((angle_bottom_left, (0, height)))
 
-        if (not ((start_angle < angle_bottom_right < stop_angle) and not inverted)) or (
-                (start_angle < angle_bottom_right < stop_angle) and inverted):
-            # if not (start_angle < angle_bottom_right < stop_angle):
-            unsorted_points.append((angle_bottom_right, (width, height)))
+            if start_angle > angle_bottom_right > stop_angle:
+                unsorted_points.append((angle_bottom_right, (width, height)))
+
+        else:
+            if not (start_angle < angle_top_right < stop_angle):
+                unsorted_points.append((angle_top_right, (width, 0)))
+
+            if not (start_angle < angle_top_left < stop_angle):
+                unsorted_points.append((angle_top_left, (0, 0)))
+
+            if not (start_angle < angle_bottom_left < stop_angle):
+                unsorted_points.append((angle_bottom_left, (0, height)))
+
+            if not (start_angle < angle_bottom_right < stop_angle):
+                unsorted_points.append((angle_bottom_right, (width, height)))
 
         unsorted_points.sort(key=self._sorting_keys)
 
@@ -1393,21 +1395,16 @@ TODO List:
 
         pygame.draw.polygon(new_image, data.current_background_color, sorted_points, 0)
 
-        intersect_start_circle = (width * math.cos(math.radians(start_angle)),
-                                  height * math.sin(math.radians(start_angle)))
+        # Todo: Draw lines to close pie
 
-        intersect_stop_circle = (width * math.cos(math.radians(stop_angle)),
-                                 height * math.sin(math.radians(stop_angle)))
+        new_image = pygame.transform.rotate(new_image, -data.cumulative_rotation_angle)
 
-        # pygame.draw.line(new_image, stroke_color, (width//2, height//2), intersect_start_circle, stroke_weight)
-        # pygame.draw.line(new_image, stroke_color, (width//2, height//2), intersect_stop_circle, stroke_weight)
+        new_width, new_height = new_image.get_size()
 
-        new_surface = pygame.transform.rotate(new_image, -data.cumulative_rotation_angle)
-
-        new_width, new_height = new_surface.get_size()
-
+        new_image.set_colorkey(data.current_background_color)
         try:
-            self.screen.blit(new_surface, (int(pos_x - new_width / 2), int(pos_y - new_height / 2)))
+            self.screen.blit(new_image, (int(pos_x - new_width / 2), int(pos_y - new_height / 2)))
+            # self.screen.blit(new_image, (int(pos_x), int(pos_y)))
         except pygame.error:
             pass
 
