@@ -1234,17 +1234,182 @@ TODO List:
         except pygame.error:
             pass
 
+    @staticmethod
+    def _get_intersection_arc_edge(angle: int, width: int, height: int):
+        if angle == 0:
+            return width, height//2
+
+        elif 0 < angle < 90:
+            tan_theta = math.tan(math.radians(angle))
+            tan_sigma = math.tan(math.radians(90 - angle))
+            d_h = tan_theta * width//2
+            d_w = tan_sigma * height//2
+
+            if d_w > width//2:
+                return width, height//2 - d_h
+
+            else:
+                return width//2 + d_w, 0
+
+        elif angle == 90:
+            return width//2, 0
+
+        elif 90 < angle < 180:
+            tan_sigma = math.tan(math.radians(180 - angle))
+            tan_theta = math.tan(math.radians(angle - 90))
+
+            d_w = tan_theta * (height // 2)
+            d_h = tan_sigma * (width // 2)
+
+            if d_w > width//2:
+                return 0, height//2 - d_h
+            else:
+                return width//2 - d_w, 0
+
+        elif angle == 180:
+            return 0, height//2
+
+        elif 180 < angle < 270:
+            tan_sigma = math.tan(math.radians(270 - angle))
+            tan_theta = math.tan(math.radians(angle - 180))
+
+            d_h = tan_theta * (width // 2)
+            d_w = tan_sigma * (height // 2)
+
+            if d_w > width // 2:
+                return 0, height//2 + d_h
+            else:
+                return width//2 - d_w, height
+
+        elif angle == 270:
+            return width//2, height
+
+        else:
+            tan_theta = math.tan(math.radians(angle - 270))
+            tan_sigma = math.tan(math.radians(360 - angle))
+
+            d_w = tan_theta * (height // 2)
+            d_h = tan_sigma * (width // 2)
+
+            if d_w > width // 2:
+                return width, height//2 + d_h
+            else:
+                return width//2 + d_w, height
+
+    @staticmethod
+    def _sorting_keys(e):
+        return e[0]
+
     def arc_pie(self, start_angle: int, stop_angle: int, x: int, y: int, width: int, height: int):
-        # Planning:
-        # Create a new image with colorkey as the background color
-        # Draw an ellipse with the desired parameters
-        # Draw an polygon from the following points with the background color:
-        # > Center of the ellipse
-        # > Extension of the starting angle to the edge of the image
-        # > Extension of the ending angle to the edge of the image
-        # > All corners of the image not seen by the angle sweep
-        # Redraw lines to center
-        pass
+
+        if abs(start_angle) >= 360:
+            start_angle = start_angle % 360
+
+        if abs(stop_angle) >= 360:
+            stop_angle = stop_angle % 360
+
+        inverted = False
+        if start_angle > stop_angle:
+            inverted = True
+
+        stroke_color, fill_color, stroke_weight = self._get_stroke_fill_and_weight()
+        data = self._get_data_object()
+
+        if data.cumulative_rotation_angle == 0:
+            has_rotation = False
+        else:
+            has_rotation = True
+
+        pos_x, pos_y = self._get_circle_box(x, y, width, height, has_rotation)
+        pos_x, pos_y = self._apply_transformations_coords(pos_x, pos_y)
+        pos_x, pos_y = int(pos_x), int(pos_y)
+
+        width, height = self._apply_transformations_length(width, height)
+        width, height = int(width), int(height)
+
+        new_image = pygame.surface.Surface((width + 1, height + 1), flags=pygame.SRCALPHA)
+        new_image.set_colorkey(data.current_background_color)
+
+        # Drawing ellipse
+        if data.anti_aliasing:
+            if data.stroke_state:
+                gfxdraw.aaellipse(new_image, width//2, height//2, width//2, height//2, stroke_color)
+            if data.fill_state:
+                gfxdraw.filled_ellipse(new_image, width//2, height//2, width//2, height//2, fill_color)
+        else:
+            if data.fill_state:
+                pygame.draw.ellipse(new_image, fill_color, (0, 0, width, height), 0)
+
+            if data.stroke_state:
+                pygame.draw.ellipse(new_image, stroke_color, (0, 0, width, height), stroke_weight)
+
+        # Calculating and drawing polygon to make pie shape
+        sorted_points = []
+
+        unsorted_points = [(start_angle, self._get_intersection_arc_edge(start_angle, width, height)),
+                           (stop_angle, self._get_intersection_arc_edge(stop_angle, width, height))]
+
+        theta = math.degrees(math.atan(height / width))
+        angle_top_right = theta
+        angle_top_left = 180 - theta
+        angle_bottom_left = 180 + theta
+        angle_bottom_right = 360 - theta
+
+        # TODO: Fix 360 wrapping issue
+        if (not ((start_angle < angle_top_right < stop_angle) and not inverted)) or (
+                (start_angle < angle_top_right < stop_angle) and inverted):
+            # if not (start_angle < angle_top_right < stop_angle):
+            unsorted_points.append((angle_top_right, (width, 0)))
+
+        if (not ((start_angle < angle_top_left < stop_angle) and not inverted)) or (
+                (start_angle < angle_top_left < stop_angle) and inverted):
+            # if not (start_angle < angle_top_left < stop_angle):
+            unsorted_points.append((angle_top_left, (0, 0)))
+
+        if (not ((start_angle < angle_bottom_left < stop_angle) and not inverted)) or (
+                (start_angle < angle_bottom_left < stop_angle) and inverted):
+            # if not (start_angle < angle_bottom_left < stop_angle):
+            unsorted_points.append((angle_bottom_left, (0, height)))
+
+        if (not ((start_angle < angle_bottom_right < stop_angle) and not inverted)) or (
+                (start_angle < angle_bottom_right < stop_angle) and inverted):
+            # if not (start_angle < angle_bottom_right < stop_angle):
+            unsorted_points.append((angle_bottom_right, (width, height)))
+
+        unsorted_points.sort(key=self._sorting_keys)
+
+        starting_index = -1
+        for i in range(len(unsorted_points)):
+            sorted_points.append(unsorted_points[i][1])
+            if unsorted_points[i][0] == start_angle:
+                starting_index = i + 1
+
+        # for index, point in enumerate(unsorted_points):
+        #     if point[0] == start_angle:
+        #         starting_index = index
+        #     sorted_points.append(point[1])
+
+        sorted_points.insert(starting_index, (width//2, height//2))
+
+        pygame.draw.polygon(new_image, data.current_background_color, sorted_points, 0)
+
+        intersect_start_circle = (width * math.cos(math.radians(start_angle)),
+                                  height * math.sin(math.radians(start_angle)))
+
+        intersect_stop_circle = (width * math.cos(math.radians(stop_angle)),
+                                 height * math.sin(math.radians(stop_angle)))
+
+        # pygame.draw.line(new_image, stroke_color, (width//2, height//2), intersect_start_circle, stroke_weight)
+        # pygame.draw.line(new_image, stroke_color, (width//2, height//2), intersect_stop_circle, stroke_weight)
+
+        new_surface = pygame.transform.rotate(new_image, -data.cumulative_rotation_angle)
+
+        new_width, new_height = new_surface.get_size()
+
+        try:
+            self.screen.blit(new_surface, (int(pos_x - new_width / 2), int(pos_y - new_height / 2)))
+        except pygame.error:
+            pass
 
     def arc_closed(self):
         # Should be the same as arc_pie with the difference that the erasing polygon should not have the center point
