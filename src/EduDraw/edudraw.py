@@ -147,13 +147,11 @@ TODO List:
         - Added hide cursor
         - Added retrieve image
         - Added lerp color
-    - Need testing
-        - Add erase & no erase
-        - Add open arc
-        - Add pie arcs
+        - Added open arcs
+        - Added pie arcs
+        - Added closed arcs
+        - Added erase & no erase
     - Not Done
-        - Add arcs (closed)
-        - Add more function docs
         - Big update for documentation
     """
 
@@ -515,6 +513,157 @@ TODO List:
             result.append((int(point_x), int(point_y)))
 
         return result
+
+    @staticmethod
+    def _get_intersection_arc_edge(angle: int, width: int, height: int) -> tuple:
+        """
+        Gets the intersection of an angle in an ellipse with the rectangle containing said ellipse.
+
+        :param angle: The angle to get the intersection from
+        :param width: The width of the rectangle containing the ellipse
+        :param height: The height of the rectangle containing the ellipse
+        :return: The (x, y) coordinates of the intersection
+        """
+        if angle == 0:
+            return width, height//2
+
+        elif 0 < angle < 90:
+            tan_theta = math.tan(math.radians(angle))
+            tan_sigma = math.tan(math.radians(90 - angle))
+            d_h = tan_theta * width//2
+            d_w = tan_sigma * height//2
+
+            if d_w > width//2:
+                return width, height//2 - d_h
+
+            else:
+                return width//2 + d_w, 0
+
+        elif angle == 90:
+            return width//2, 0
+
+        elif 90 < angle < 180:
+            tan_sigma = math.tan(math.radians(180 - angle))
+            tan_theta = math.tan(math.radians(angle - 90))
+
+            d_w = tan_theta * (height // 2)
+            d_h = tan_sigma * (width // 2)
+
+            if d_w > width//2:
+                return 0, height//2 - d_h
+            else:
+                return width//2 - d_w, 0
+
+        elif angle == 180:
+            return 0, height//2
+
+        elif 180 < angle < 270:
+            tan_sigma = math.tan(math.radians(270 - angle))
+            tan_theta = math.tan(math.radians(angle - 180))
+
+            d_h = tan_theta * (width // 2)
+            d_w = tan_sigma * (height // 2)
+
+            if d_w > width // 2:
+                return 0, height//2 + d_h
+            else:
+                return width//2 - d_w, height
+
+        elif angle == 270:
+            return width//2, height
+
+        else:
+            tan_theta = math.tan(math.radians(angle - 270))
+            tan_sigma = math.tan(math.radians(360 - angle))
+
+            d_w = tan_theta * (height // 2)
+            d_h = tan_sigma * (width // 2)
+
+            if d_w > width // 2:
+                return width, height//2 + d_h
+            else:
+                return width//2 + d_w, height
+
+    @staticmethod
+    def _get_intersection_angle_ellipse(angle: int, width: int, height: int) -> tuple:
+        """
+        Finds the intersection of an angle with the circumference of an ellipse
+        Got the formulas from here: https://math.stackexchange.com/q/22068
+
+        :param angle: The angle to find the intersection
+        :param width: The width of the rectangle containing the ellipse
+        :param height: The height of the rectangle containing the ellipse
+        :return: The intersection of the angle with the circumference
+        """
+
+        if angle < 0:
+            angle += 360
+        # Cases where tg(x) is undefined
+        if angle == 0:
+            return width, height//2
+        if angle == 90:
+            return width//2, height
+        if angle == 180:
+            return 0, height//2
+        if angle == 270:
+            return width//2, 0
+
+        tg_angle = math.tan(math.radians(angle))
+        a = width // 2
+        b = height // 2
+        denominator = math.sqrt(b * b + a * a * tg_angle * tg_angle)
+        x_numerator = a * b
+        x = x_numerator / denominator
+        y_numerator = a * b * tg_angle
+        y = y_numerator / denominator
+        if 90 < angle < 270:
+            return -x + a, -y + b
+        else:
+            return x + a, y + b
+
+    @staticmethod
+    def _sorting_keys(e):
+        """ Dummy function to help sorting """
+        return e[0]
+
+    @staticmethod
+    def _get_intersections_line_rect(point: tuple, angle: int, width: int, height: int) -> list:
+        if angle == 90 or angle == 270:
+            return [(point[0], 0), (point[0], height)]
+        if angle == 0 or angle == 180:
+            return [(0, point[1]), (width, point[1])]
+
+        angle = math.radians(angle)
+        sigma = angle - math.pi/2
+        alpha = math.pi/2 - sigma
+
+        tg_sigma = math.tan(sigma)
+        tg_alpha = math.tan(alpha)
+
+        dx_top = point[1] * tg_sigma
+        dy_left = point[0] * tg_alpha
+        dy_right = (width - point[0]) * tg_alpha
+        dx_bottom = (height - point[1]) * tg_sigma
+
+        point_top = (point[0] + dx_top, 0)
+        point_left = (0, point[1] + dy_left)
+        point_right = (width, point[1] - dy_right)
+        point_bottom = (point[0] - dx_bottom, height)
+
+        points = []
+        if 0 < point_top[0] < width:
+            points.append(point_top)
+
+        if 0 < point_bottom[0] < width:
+            points.append(point_bottom)
+
+        if 0 < point_left[1] < height:
+            points.append(point_left)
+
+        if 0 < point_right[1] < height:
+            points.append(point_right)
+
+        return points
 
     # State methods --------------------------------------------------------------------------------------
 
@@ -1236,118 +1385,6 @@ TODO List:
         except pygame.error:
             pass
 
-    @staticmethod
-    def _get_intersection_arc_edge(angle: int, width: int, height: int) -> tuple:
-        """
-        Gets the intersection of an angle in an ellipse with the rectangle containing said ellipse.
-
-        :param angle: The angle to get the intersection from
-        :param width: The width of the rectangle containing the ellipse
-        :param height: The height of the rectangle containing the ellipse
-        :return: The (x, y) coordinates of the intersection
-        """
-        if angle == 0:
-            return width, height//2
-
-        elif 0 < angle < 90:
-            tan_theta = math.tan(math.radians(angle))
-            tan_sigma = math.tan(math.radians(90 - angle))
-            d_h = tan_theta * width//2
-            d_w = tan_sigma * height//2
-
-            if d_w > width//2:
-                return width, height//2 - d_h
-
-            else:
-                return width//2 + d_w, 0
-
-        elif angle == 90:
-            return width//2, 0
-
-        elif 90 < angle < 180:
-            tan_sigma = math.tan(math.radians(180 - angle))
-            tan_theta = math.tan(math.radians(angle - 90))
-
-            d_w = tan_theta * (height // 2)
-            d_h = tan_sigma * (width // 2)
-
-            if d_w > width//2:
-                return 0, height//2 - d_h
-            else:
-                return width//2 - d_w, 0
-
-        elif angle == 180:
-            return 0, height//2
-
-        elif 180 < angle < 270:
-            tan_sigma = math.tan(math.radians(270 - angle))
-            tan_theta = math.tan(math.radians(angle - 180))
-
-            d_h = tan_theta * (width // 2)
-            d_w = tan_sigma * (height // 2)
-
-            if d_w > width // 2:
-                return 0, height//2 + d_h
-            else:
-                return width//2 - d_w, height
-
-        elif angle == 270:
-            return width//2, height
-
-        else:
-            tan_theta = math.tan(math.radians(angle - 270))
-            tan_sigma = math.tan(math.radians(360 - angle))
-
-            d_w = tan_theta * (height // 2)
-            d_h = tan_sigma * (width // 2)
-
-            if d_w > width // 2:
-                return width, height//2 + d_h
-            else:
-                return width//2 + d_w, height
-
-    @staticmethod
-    def _get_intersection_angle_ellipse(angle: int, width: int, height: int) -> tuple:
-        """
-        Finds the intersection of an angle with the circumference of an ellipse
-        Got the formulas from here: https://math.stackexchange.com/q/22068
-
-        :param angle: The angle to find the intersection
-        :param width: The width of the rectangle containing the ellipse
-        :param height: The height of the rectangle containing the ellipse
-        :return: The intersection of the angle with the circumference
-        """
-
-        if angle < 0:
-            angle += 360
-        # Cases where tg(x) is undefined
-        if angle == 0:
-            return width, height//2
-        if angle == 90:
-            return width//2, height
-        if angle == 180:
-            return 0, height//2
-        if angle == 270:
-            return width//2, 0
-
-        tg_angle = math.tan(math.radians(angle))
-        a = width // 2
-        b = height // 2
-        denominator = math.sqrt(b * b + a * a * tg_angle * tg_angle)
-        x_numerator = a * b
-        x = x_numerator / denominator
-        y_numerator = a * b * tg_angle
-        y = y_numerator / denominator
-        if 90 < angle < 270:
-            return -x + a, -y + b
-        else:
-            return x + a, y + b
-
-    @staticmethod
-    def _sorting_keys(e):
-        """ Dummy function to help sorting """
-        return e[0]
-
     def arc_pie(self, start_angle: int, stop_angle: int, x: int, y: int, width: int, height: int,
                 close_edges: bool = True):
         """
@@ -1472,8 +1509,156 @@ TODO List:
         except pygame.error:
             pass
 
-    def arc_closed(self):
-        # Should be the same as arc_pie with the difference that the erasing polygon should not have the center point
+    @staticmethod
+    def _get_angle_from_points(p1: tuple, p2: tuple) -> int:
+        if p1[0] == p2[0]:
+            if p2[1] > p1[0]:
+                return 90
+            else:
+                return 270
+        if p1[1] == p2[1]:
+            if p2[0] > p1[0]:
+                return 0
+            else:
+                return 180
+
+        dy = p2[1] - p1[1]
+        dx = p2[0] - p1[0]
+
+        angle = int(math.degrees(math.atan(dy/dx)))
+
+        return angle
+
+    def arc_closed(self, start_angle: int, stop_angle: int, x: int, y: int, width: int, height: int,
+                   close_edges: bool = True):
+
+        if abs(start_angle) >= 360:
+            start_angle = start_angle % 360
+
+        if abs(stop_angle) >= 360:
+            stop_angle = stop_angle % 360
+
+        if start_angle == stop_angle:
+            return
+
+        inverted = False
+        if start_angle > stop_angle:
+            inverted = True
+
+        stroke_color, fill_color, stroke_weight = self._get_stroke_fill_and_weight()
+        data = self._get_data_object()
+
+        pos_x, pos_y = self._get_circle_box(x, y, width, height, True)
+        pos_x, pos_y = self._apply_transformations_coords(pos_x, pos_y)
+        pos_x, pos_y = int(pos_x), int(pos_y)
+
+        width, height = self._apply_transformations_length(width, height)
+        width, height = int(width), int(height)
+
+        new_image = pygame.surface.Surface((width + 1, height + 1), flags=pygame.SRCALPHA)
+
+        # Drawing ellipse
+        if data.anti_aliasing:
+            if data.stroke_state:
+                gfxdraw.aaellipse(new_image, width // 2, height // 2, width // 2, height // 2, stroke_color)
+            if data.fill_state:
+                gfxdraw.filled_ellipse(new_image, width // 2, height // 2, width // 2, height // 2, fill_color)
+        else:
+            if data.fill_state:
+                pygame.draw.ellipse(new_image, fill_color, (0, 0, width, height), 0)
+
+            if data.stroke_state:
+                pygame.draw.ellipse(new_image, stroke_color, (0, 0, width, height), stroke_weight)
+
+        # Calculating and drawing polygon to make shape
+        sorted_points = []
+
+        point_start_angle = self._get_intersection_angle_ellipse(-start_angle, width, height)
+        point_stop_angle = self._get_intersection_angle_ellipse(-stop_angle, width, height)
+
+        angle = self._get_angle_from_points(point_start_angle, point_stop_angle)
+
+        intersections = self._get_intersections_line_rect(point_start_angle, angle, width, height)
+
+        unsorted_points = []
+
+        if len(intersections) != 2:
+            return
+
+        new_angles = []
+
+        for point in intersections:
+            theta = math.degrees(math.atan2(point[1] - height//2, point[0] - width//2))
+            if theta < 0:
+                theta *= -1
+            else:
+                theta = 180 + (180 - theta)
+
+            theta = theta % 360
+            new_angles.append(theta)
+            unsorted_points.append((theta, point))
+
+        theta = math.degrees(math.atan(height / width))
+        angle_top_right = theta
+        angle_top_left = 180 - theta
+        angle_bottom_left = 180 + theta
+        angle_bottom_right = 360 - theta
+
+        start_angle = new_angles[1]
+        stop_angle = new_angles[0]
+
+        if inverted:
+            if start_angle < stop_angle:
+                start_angle, stop_angle = stop_angle, start_angle
+
+            if start_angle > angle_top_right > stop_angle:
+                unsorted_points.append((angle_top_right, (width, 0)))
+
+            if start_angle > angle_top_left > stop_angle:
+                unsorted_points.append((angle_top_left, (0, 0)))
+
+            if start_angle > angle_bottom_left > stop_angle:
+                unsorted_points.append((angle_bottom_left, (0, height)))
+
+            if start_angle > angle_bottom_right > stop_angle:
+                unsorted_points.append((angle_bottom_right, (width, height)))
+
+        else:
+            if start_angle > stop_angle:
+                start_angle, stop_angle = stop_angle, start_angle
+
+            if not (start_angle < angle_top_right < stop_angle):
+                unsorted_points.append((angle_top_right, (width, 0)))
+
+            if not (start_angle < angle_top_left < stop_angle):
+                unsorted_points.append((angle_top_left, (0, 0)))
+
+            if not (start_angle < angle_bottom_left < stop_angle):
+                unsorted_points.append((angle_bottom_left, (0, height)))
+
+            if not (start_angle < angle_bottom_right < stop_angle):
+                unsorted_points.append((angle_bottom_right, (width, height)))
+
+        unsorted_points.sort(key=self._sorting_keys)
+
+        for i in range(len(unsorted_points)):
+            sorted_points.append(unsorted_points[i][1])
+
+        pygame.draw.polygon(new_image, data.current_background_color, sorted_points, 0)
+
+        if close_edges:
+            pygame.draw.line(new_image, stroke_color, point_start_angle, point_stop_angle, stroke_weight)
+
+        new_image = pygame.transform.rotate(new_image, -data.cumulative_rotation_angle)
+
+        new_width, new_height = new_image.get_size()
+
+        new_image.set_colorkey(data.current_background_color)
+        try:
+            self.screen.blit(new_image, (int(pos_x - new_width / 2), int(pos_y - new_height / 2)))
+            # self.screen.blit(new_image, (int(pos_x), int(pos_y)))
+        except pygame.error:
+            pass
         pass
 
     # Other methods -----------------------------------------------------------------------------------------------

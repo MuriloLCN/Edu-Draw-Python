@@ -25,7 +25,7 @@ def pressed(data):
 
 
 def setup():
-    # s.frame_rate(20)
+    # s.frame_rate(50)
     s.deltatime = 0
     s.set_controls(key_down=pressed)
 
@@ -739,22 +739,87 @@ def test_bezier():
 
 tests.append(test_bezier)
 
+
 def test_pie():
+    global flag_done
+    # This is so trippy
     s.background((200, 200, 200))
-    s.fill((0, 0, 0))
-    s.rect(0, 0, s.width, s.height)
-    s.line(0, 0, s.width//2, s.height//2)
+    s.no_fill()
+    s.rotate(s.frame_count * 1.1)
+    s.scale(1.25, 0.75)
+    s.translate(s.width//2, s.height//2)
+    s.stroke((255, 255, 255))
     s.stroke_weight(3)
-    s.circle_mode("TOP_LEFT")
     s.fill((255, 0, 0))
+
     s.stroke((0, 0, 255))
     s.arc_pie(s.frame_count + 150, s.frame_count * 2, 0, 0, s.width//2, s.height//2)
-    # s.arc_pie(243, 126, s.width//2, s.height//2, s.width//2, s.height//2)
-    # print(s.frame_count)
 
-tests = []
+    if s.frame_count > 180:
+        flag_done = True
+
+
 tests.append(test_pie)
-# tests.append(test_null_mode)
+
+
+def test_arc_closed():
+    global flag_done
+    s.background((200, 200, 200))
+    s.no_fill()
+    s.rotate(s.frame_count * 1.1)
+    s.scale(1.25, 0.75)
+    s.translate(s.width//2, s.height//2)
+    s.stroke((255, 255, 255))
+    s.stroke_weight(3)
+    s.fill((255, 0, 0))
+
+    s.stroke((0, 0, 255))
+    s.arc_closed(s.frame_count + 150, s.frame_count * 2, 0, 0, s.width//2, s.height//2)
+
+    if s.frame_count > 180:
+        flag_done = True
+
+
+tests.append(test_arc_closed)
+
+
+def test_arc_open():
+    global flag_done
+    s.background((200, 200, 200))
+    s.no_fill()
+    s.rotate(s.frame_count * 1.1)
+    s.scale(1.25, 0.75)
+    s.translate(s.width//2, s.height//2)
+    s.stroke((255, 255, 255))
+    s.stroke_weight(3)
+    s.fill((255, 0, 0))
+
+    s.stroke((0, 0, 255))
+    s.arc_open(s.frame_count + 150, s.frame_count * 2, 0, 0, s.width//2, s.height//2)
+
+    if s.frame_count > 180:
+        flag_done = True
+
+
+tests.append(test_arc_open)
+
+
+def test_erase():
+    s.background((200, 200, 200))
+    s.fill((255, 0, 0))
+    s.circle(s.width//2, s.height//2, s.width//2)
+    s.fill((0, 0, 255))
+    s.erase()
+    s.rect(0, s.height//3, s.width, s.height//3 + 40)
+    s.no_erase()
+    s.rect(s.width//3, 0, s.width//3 + 40, s.height)
+    s.erase()
+    s.translate(90, 90)
+    s.triangle(120, 120, 180, 240, 240, 120)
+    s.no_erase()
+
+
+tests.append(test_erase)
 
 s.start(setup, draw, "Running tests")
 
