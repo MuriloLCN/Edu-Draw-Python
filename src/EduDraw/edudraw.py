@@ -49,7 +49,7 @@ class _RepeatTimer:
             else:
                 self.func()
 
-            if self.interval > 0.005:
+            if self.interval != 0:
                 time.sleep(self.interval)
 
     def quit(self):
@@ -82,6 +82,8 @@ class _SimulationData:
         self.current_background_color = (125, 125, 125)
         self.current_stroke_weight = 1
 
+        self.erase_state = False
+
         self.anti_aliasing = False
 
         self.fill_state = True
@@ -113,6 +115,9 @@ class _ControlClass:
 
     def event_handler(self, events):
         for event in events:
+            if event.type == pygame.ACTIVEEVENT:
+                if hasattr(event, 'state'):
+                    self.main_instance.focused = not event.state == 1
             if event.type == pygame.QUIT:
                 self.main_instance.quit()
                 return
@@ -152,6 +157,8 @@ class EduDraw:
         self.quitted = False
         self.reset_after_loop = True
         self.frame_count = 0
+
+        self.focused = True
 
         self.original_font_instance = None
 
@@ -228,6 +235,7 @@ class EduDraw:
         else:
             self.screen = pygame.display.set_mode((self.width, self.height))
             pygame.display.set_caption(window_title)
+            self.remove_icon()
 
         self._proto_setup()
         self._proto_draw()
@@ -301,6 +309,10 @@ class EduDraw:
         fill_color = data.current_fill_color
         stroke_weight = data.current_stroke_weight
 
+        if data.erase_state:
+            stroke_color = data.current_background_color
+            fill_color = data.current_background_color
+
         if not data.stroke_state:
             stroke_color = None
         if not data.fill_state:
@@ -358,13 +370,16 @@ class EduDraw:
 
         data = self._get_data_object()
 
-        scale_tf = data.transformations['SCL']
+        # scale_tf = data.transformations['SCL']
 
-        for transformation in data.applied_transformations:
-            # Sizes are only affected by scaling
-            if transformation[0] == scale_tf:
-                final_width *= transformation[1][0]
-                final_height *= transformation[1][1]
+        final_width *= data.cumulative_scaling_factor[0]
+        final_height *= data.cumulative_scaling_factor[1]
+
+        # for transformation in data.applied_transformations:
+        #     # Sizes are only affected by scaling
+        #     if transformation[0] == scale_tf:
+        #         final_width *= transformation[1][0]
+        #         final_height *= transformation[1][1]
 
         return final_width, final_height
 
@@ -404,6 +419,267 @@ class EduDraw:
                 final_y = y
 
         return final_x, final_y
+
+    @staticmethod
+    def _compute_bezier_points(vertices: list, num_points: int = None):
+        """
+        Function found at: https://www.pygame.org/wiki/BezierCurve
+        Credits: Victor Blomqvist, 2007
+
+        Computes the points to be used when drawing a bezier curve
+        :param vertices: The control points to be used for the curve. Needs at least 4
+        :param num_points: The number of points to be used as steps. Higher numbers make a more rounded shape.
+        """
+
+        if num_points is None:
+            num_points = 30
+
+        if num_points <= 2 or len(vertices) != 4:
+            return None
+
+        result = []
+
+        b0x = vertices[0][0]
+        b0y = vertices[0][1]
+        b1x = vertices[1][0]
+        b1y = vertices[1][1]
+        b2x = vertices[2][0]
+        b2y = vertices[2][1]
+        b3x = vertices[3][0]
+        b3y = vertices[3][1]
+
+        # Compute polynomial coefficients from Bezier points
+        ax = -b0x + 3 * b1x + -3 * b2x + b3x
+        ay = -b0y + 3 * b1y + -3 * b2y + b3y
+
+        bx = 3 * b0x + -6 * b1x + 3 * b2x
+        by = 3 * b0y + -6 * b1y + 3 * b2y
+
+        cx = -3 * b0x + 3 * b1x
+        cy = -3 * b0y + 3 * b1y
+
+        dx = b0x
+        dy = b0y
+
+        # Set up the number of steps and step size
+        num_steps = num_points - 1  # arbitrary choice
+        h = 1.0 / num_steps  # compute our step size
+
+        # Compute forward differences from Bezier points and "h"
+        point_x = dx
+        point_y = dy
+
+        first_fdx = ax * (h * h * h) + bx * (h * h) + cx * h
+        first_fdy = ay * (h * h * h) + by * (h * h) + cy * h
+
+        second_fdx = 6 * ax * (h * h * h) + 2 * bx * (h * h)
+        second_fdy = 6 * ay * (h * h * h) + 2 * by * (h * h)
+
+        third_fdx = 6 * ax * (h * h * h)
+        third_fdy = 6 * ay * (h * h * h)
+
+        # Compute points at each step
+        result.append((int(point_x), int(point_y)))
+
+        for i in range(num_steps):
+            point_x += first_fdx
+            point_y += first_fdy
+
+            first_fdx += second_fdx
+            first_fdy += second_fdy
+
+            second_fdx += third_fdx
+            second_fdy += third_fdy
+
+            result.append((int(point_x), int(point_y)))
+
+        return result
+
+    @staticmethod
+    def _get_intersection_arc_edge(angle: int, width: int, height: int) -> tuple:
+        """
+        Gets the intersection of an angle in an ellipse with the rectangle containing said ellipse.
+
+        :param angle: The angle to get the intersection from
+        :param width: The width of the rectangle containing the ellipse
+        :param height: The height of the rectangle containing the ellipse
+        :return: The (x, y) coordinates of the intersection
+        """
+        if angle == 0:
+            return width, height//2
+
+        elif 0 < angle < 90:
+            tan_theta = math.tan(math.radians(angle))
+            tan_sigma = math.tan(math.radians(90 - angle))
+            d_h = tan_theta * width//2
+            d_w = tan_sigma * height//2
+
+            if d_w > width//2:
+                return width, height//2 - d_h
+
+            else:
+                return width//2 + d_w, 0
+
+        elif angle == 90:
+            return width//2, 0
+
+        elif 90 < angle < 180:
+            tan_sigma = math.tan(math.radians(180 - angle))
+            tan_theta = math.tan(math.radians(angle - 90))
+
+            d_w = tan_theta * (height // 2)
+            d_h = tan_sigma * (width // 2)
+
+            if d_w > width//2:
+                return 0, height//2 - d_h
+            else:
+                return width//2 - d_w, 0
+
+        elif angle == 180:
+            return 0, height//2
+
+        elif 180 < angle < 270:
+            tan_sigma = math.tan(math.radians(270 - angle))
+            tan_theta = math.tan(math.radians(angle - 180))
+
+            d_h = tan_theta * (width // 2)
+            d_w = tan_sigma * (height // 2)
+
+            if d_w > width // 2:
+                return 0, height//2 + d_h
+            else:
+                return width//2 - d_w, height
+
+        elif angle == 270:
+            return width//2, height
+
+        else:
+            tan_theta = math.tan(math.radians(angle - 270))
+            tan_sigma = math.tan(math.radians(360 - angle))
+
+            d_w = tan_theta * (height // 2)
+            d_h = tan_sigma * (width // 2)
+
+            if d_w > width // 2:
+                return width, height//2 + d_h
+            else:
+                return width//2 + d_w, height
+
+    @staticmethod
+    def _get_intersection_angle_ellipse(angle: int, width: int, height: int) -> tuple:
+        """
+        Finds the intersection of an angle with the circumference of an ellipse
+        Got the formulas from here: https://math.stackexchange.com/q/22068
+
+        :param angle: The angle to find the intersection
+        :param width: The width of the rectangle containing the ellipse
+        :param height: The height of the rectangle containing the ellipse
+        :return: The intersection of the angle with the circumference
+        """
+
+        if angle < 0:
+            angle += 360
+        # Cases where tg(x) is undefined
+        if angle == 0:
+            return width, height//2
+        if angle == 90:
+            return width//2, height
+        if angle == 180:
+            return 0, height//2
+        if angle == 270:
+            return width//2, 0
+
+        tg_angle = math.tan(math.radians(angle))
+        a = width // 2
+        b = height // 2
+        denominator = math.sqrt(b * b + a * a * tg_angle * tg_angle)
+        x_numerator = a * b
+        x = x_numerator / denominator
+        y_numerator = a * b * tg_angle
+        y = y_numerator / denominator
+        if 90 < angle < 270:
+            return -x + a, -y + b
+        else:
+            return x + a, y + b
+
+    @staticmethod
+    def _sorting_keys(e):
+        """ Dummy function to help sorting """
+        return e[0]
+
+    @staticmethod
+    def _get_intersections_line_rect(point: tuple, angle: int, width: int, height: int) -> list:
+        """
+        Finds the intersections between a line given by a point and an angle with the four line defining a rectangle.
+
+        :param point: The known point
+        :param angle: The angle the line forms
+        :param width: The width of the rect
+        :param height: The height of the rect
+        """
+        if angle == 90 or angle == 270:
+            return [(point[0], 0), (point[0], height)]
+        if angle == 0 or angle == 180:
+            return [(0, point[1]), (width, point[1])]
+
+        angle = math.radians(angle)
+        sigma = angle - math.pi/2
+        alpha = math.pi/2 - sigma
+
+        tg_sigma = math.tan(sigma)
+        tg_alpha = math.tan(alpha)
+
+        dx_top = point[1] * tg_sigma
+        dy_left = point[0] * tg_alpha
+        dy_right = (width - point[0]) * tg_alpha
+        dx_bottom = (height - point[1]) * tg_sigma
+
+        point_top = (point[0] + dx_top, 0)
+        point_left = (0, point[1] + dy_left)
+        point_right = (width, point[1] - dy_right)
+        point_bottom = (point[0] - dx_bottom, height)
+
+        points = []
+        if 0 < point_top[0] < width:
+            points.append(point_top)
+
+        if 0 < point_bottom[0] < width:
+            points.append(point_bottom)
+
+        if 0 < point_left[1] < height:
+            points.append(point_left)
+
+        if 0 < point_right[1] < height:
+            points.append(point_right)
+
+        return points
+
+    @staticmethod
+    def _get_angle_from_points(p1: tuple, p2: tuple) -> int:
+        """
+        Retrieves angle from two points.
+
+        :param p1: The first point
+        :param p2: The second point
+        :return: The angle (in degrees)
+        """
+        if p1[0] == p2[0]:
+            if p2[1] > p1[0]:
+                return 90
+            else:
+                return 270
+        if p1[1] == p2[1]:
+            if p2[0] > p1[0]:
+                return 0
+            else:
+                return 180
+
+        dy = p2[1] - p1[1]
+        dx = p2[0] - p1[0]
+
+        angle = int(math.degrees(math.atan(dy / dx)))
+
+        return angle
 
     # State methods --------------------------------------------------------------------------------------
 
@@ -637,6 +913,17 @@ class EduDraw:
 
         data.anti_aliasing = not data.anti_aliasing
 
+    def erase(self):
+        """
+        Makes all drawings erase from the canvas (i.e, their color will be the current background color)
+        """
+        self._get_data_object().erase_state = True
+
+    def no_erase(self):
+        """
+        Stops erasing shapes
+        """
+        self._get_data_object().erase_state = False
     # Draw methods --------------------------------------------------------------------------------------
 
     def point(self, x: int, y: int):
@@ -837,7 +1124,11 @@ class EduDraw:
         new_surface = pygame.transform.rotate(new_surface, -data.cumulative_rotation_angle)
 
         new_width, new_height = new_surface.get_size()
-        self.screen.blit(new_surface, (int(pos_x - new_width / 2), int(pos_y - new_height / 2)))
+
+        try:
+            self.screen.blit(new_surface, (int(pos_x - new_width / 2), int(pos_y - new_height / 2)))
+        except pygame.error:
+            pass
 
     def line(self, x1: int, y1: int, x2: int, y2: int):
         """
@@ -1023,7 +1314,482 @@ class EduDraw:
         else:
             box = (int(x - real_w//2), int(y - real_h//2), real_w, real_h)
 
-        self.screen.blit(img, box)
+        try:
+            self.screen.blit(img, box)
+        except pygame.error:
+            pass
+
+    def bezier_curve(self, control_points: list, num_points: int | None = None):
+        """
+        Draws a bezier curve from a set of control points
+
+        :param control_points: A list of tuples containing the coordinates of the control points for the curve
+        :param num_points: The number of points to be used as steps for the lines. Default: 30
+        """
+        data = self._get_data_object()
+
+        b_points = self._compute_bezier_points(control_points, num_points)
+
+        if b_points is None:
+            return
+
+        for i, elem in enumerate(b_points):
+            new_point = self._apply_transformations_coords(elem[0], elem[1])
+            b_points[i] = new_point
+
+        stroke_color, fill_color, stroke_weight = self._get_stroke_fill_and_weight()
+
+        if data.stroke_state:
+            pygame.draw.lines(self.screen, stroke_color, False, b_points, stroke_weight)
+
+    def arc_open(self, start_angle: int, stop_angle: int, x: int, y: int, width: int, height: int):
+        """
+        Draws an open arc onto the canvas.
+
+        :param start_angle: The starting angle (in degrees) of the arc
+        :param stop_angle: The stopping angle (in degrees) of the arc
+        :param x: The x coordinate to draw the arc, if circle mode is top_left, it's the top left of the rectangle
+        containing the ellipse, else it's the center of the ellipse
+        :param y: The y coordinate to draw the arc
+        :param width: The width of the ellipse to create the arc
+        :param height: The height of the ellipse to create the arc
+        """
+        data = self._get_data_object()
+        color = data.current_stroke_color
+
+        if data.cumulative_rotation_angle == 0:
+            has_rotation = False
+        else:
+            has_rotation = True
+
+        pos_x, pos_y = self._get_circle_box(x, y, width, height, has_rotation)
+        pos_x, pos_y = self._apply_transformations_coords(pos_x, pos_y)
+        pos_x, pos_y = int(pos_x), int(pos_y)
+
+        width, height = self._apply_transformations_length(width, height)
+        width, height = int(width), int(height)
+
+        # Circles and non-slanted ellipses have simple drawings
+        if width == height or not has_rotation:
+            stop_angle -= data.cumulative_rotation_angle
+            start_angle -= data.cumulative_rotation_angle
+
+            start_angle = math.radians(start_angle)
+            stop_angle = math.radians(stop_angle)
+
+            # pos_x -= width//2
+            # pos_y -= height//2
+
+            pygame.draw.arc(self.screen, color, (pos_x, pos_y, width, height), start_angle,
+                            stop_angle, data.current_stroke_weight)
+            return
+
+        start_angle = math.radians(start_angle)
+        stop_angle = math.radians(stop_angle)
+
+        new_surface = pygame.surface.Surface((width + 1, height + 1), pygame.SRCALPHA)
+
+        pygame.draw.arc(new_surface, color, (0, 0, width + 1, height + 1), start_angle, stop_angle,
+                        data.current_stroke_weight)
+
+        new_surface = pygame.transform.rotate(new_surface, -data.cumulative_rotation_angle)
+
+        new_width, new_height = new_surface.get_size()
+
+        try:
+            self.screen.blit(new_surface, (int(pos_x - new_width / 2), int(pos_y - new_height / 2)))
+        except pygame.error:
+            pass
+
+    def arc_pie(self, start_angle: int, stop_angle: int, x: int, y: int, width: int, height: int,
+                close_edges: bool = True):
+        """
+        Draws a pie-like arc in a counter-clockwise direction from the starting angle up to the stopping angle.
+
+        :param start_angle: The starting angle to draw the pie.
+        :param stop_angle: The angle to stop the pie
+        :param x: The x coordinate to draw the ellipse of the pie
+        :param y: The y coordinate to draw the ellipse of the pie
+        :param width: The horizontal diameter of the ellipse
+        :param height: The vertical diameter of the ellipse
+        :param close_edges: Whether the lines from the edges of the pie should be drawn. Default: True
+        """
+        if abs(start_angle) >= 360:
+            start_angle = start_angle % 360
+
+        if abs(stop_angle) >= 360:
+            stop_angle = stop_angle % 360
+
+        if start_angle == stop_angle:
+            return
+
+        inverted = False
+        if start_angle > stop_angle:
+            inverted = True
+
+        stroke_color, fill_color, stroke_weight = self._get_stroke_fill_and_weight()
+        data = self._get_data_object()
+
+        pos_x, pos_y = self._get_circle_box(x, y, width, height, True)
+        pos_x, pos_y = self._apply_transformations_coords(pos_x, pos_y)
+        pos_x, pos_y = int(pos_x), int(pos_y)
+
+        width, height = self._apply_transformations_length(width, height)
+        width, height = int(width), int(height)
+
+        new_image = pygame.surface.Surface((width + 1, height + 1), flags=pygame.SRCALPHA)
+
+        # Drawing ellipse
+        if data.anti_aliasing:
+            if data.stroke_state:
+                gfxdraw.aaellipse(new_image, width//2, height//2, width//2, height//2, stroke_color)
+            if data.fill_state:
+                gfxdraw.filled_ellipse(new_image, width//2, height//2, width//2, height//2, fill_color)
+        else:
+            if data.fill_state:
+                pygame.draw.ellipse(new_image, fill_color, (0, 0, width, height), 0)
+
+            if data.stroke_state:
+                pygame.draw.ellipse(new_image, stroke_color, (0, 0, width, height), stroke_weight)
+
+        # Calculating and drawing polygon to make pie shape
+        sorted_points = []
+
+        unsorted_points = [(start_angle, self._get_intersection_arc_edge(start_angle, width, height)),
+                           (stop_angle, self._get_intersection_arc_edge(stop_angle, width, height))]
+
+        theta = math.degrees(math.atan(height / width))
+        angle_top_right = theta
+        angle_top_left = 180 - theta
+        angle_bottom_left = 180 + theta
+        angle_bottom_right = 360 - theta
+
+        if inverted:
+            if start_angle > angle_top_right > stop_angle:
+                unsorted_points.append((angle_top_right, (width, 0)))
+
+            if start_angle > angle_top_left > stop_angle:
+                unsorted_points.append((angle_top_left, (0, 0)))
+
+            if start_angle > angle_bottom_left > stop_angle:
+                unsorted_points.append((angle_bottom_left, (0, height)))
+
+            if start_angle > angle_bottom_right > stop_angle:
+                unsorted_points.append((angle_bottom_right, (width, height)))
+
+        else:
+            if not (start_angle < angle_top_right < stop_angle):
+                unsorted_points.append((angle_top_right, (width, 0)))
+
+            if not (start_angle < angle_top_left < stop_angle):
+                unsorted_points.append((angle_top_left, (0, 0)))
+
+            if not (start_angle < angle_bottom_left < stop_angle):
+                unsorted_points.append((angle_bottom_left, (0, height)))
+
+            if not (start_angle < angle_bottom_right < stop_angle):
+                unsorted_points.append((angle_bottom_right, (width, height)))
+
+        unsorted_points.sort(key=self._sorting_keys)
+
+        starting_index = -1
+        for i in range(len(unsorted_points)):
+            sorted_points.append(unsorted_points[i][1])
+            if unsorted_points[i][0] == start_angle:
+                starting_index = i + 1
+
+        # for index, point in enumerate(unsorted_points):
+        #     if point[0] == start_angle:
+        #         starting_index = index
+        #     sorted_points.append(point[1])
+
+        sorted_points.insert(starting_index, (width//2, height//2))
+
+        pygame.draw.polygon(new_image, data.current_background_color, sorted_points, 0)
+
+        if close_edges:
+            point_start = self._get_intersection_angle_ellipse(-start_angle, width, height)
+            point_stop = self._get_intersection_angle_ellipse(-stop_angle, width, height)
+
+            pygame.draw.line(new_image, stroke_color, (width//2, height//2), point_start, stroke_weight)
+            pygame.draw.line(new_image, stroke_color, (width//2, height//2), point_stop, stroke_weight)
+
+        new_image = pygame.transform.rotate(new_image, -data.cumulative_rotation_angle)
+
+        new_width, new_height = new_image.get_size()
+
+        new_image.set_colorkey(data.current_background_color)
+        try:
+            self.screen.blit(new_image, (int(pos_x - new_width / 2), int(pos_y - new_height / 2)))
+            # self.screen.blit(new_image, (int(pos_x), int(pos_y)))
+        except pygame.error:
+            pass
+
+    def arc_closed(self, start_angle: int, stop_angle: int, x: int, y: int, width: int, height: int,
+                   close_edges: bool = True):
+        """
+        Draws a closed arc between two angles in an ellipse
+
+        :param start_angle: The starting angle of the arc
+        :param stop_angle: The stopping angle of the arc
+        :param x: The x coordinate to place the arc's ellipse
+        :param y: The y coordinate to place the arc's ellipse
+        :param width: The width of the ellipse
+        :param height: The height of the ellipse
+        :param close_edges: Whether the edges between the starting and stopping angles should be connected
+        """
+
+        if abs(start_angle) >= 360:
+            start_angle = start_angle % 360
+
+        if abs(stop_angle) >= 360:
+            stop_angle = stop_angle % 360
+
+        if start_angle == stop_angle:
+            return
+
+        inverted = False
+        if start_angle > stop_angle:
+            inverted = True
+
+        stroke_color, fill_color, stroke_weight = self._get_stroke_fill_and_weight()
+        data = self._get_data_object()
+
+        pos_x, pos_y = self._get_circle_box(x, y, width, height, True)
+        pos_x, pos_y = self._apply_transformations_coords(pos_x, pos_y)
+        pos_x, pos_y = int(pos_x), int(pos_y)
+
+        width, height = self._apply_transformations_length(width, height)
+        width, height = int(width), int(height)
+
+        new_image = pygame.surface.Surface((width + 1, height + 1), flags=pygame.SRCALPHA)
+
+        # Drawing ellipse
+        if data.anti_aliasing:
+            if data.stroke_state:
+                gfxdraw.aaellipse(new_image, width // 2, height // 2, width // 2, height // 2, stroke_color)
+            if data.fill_state:
+                gfxdraw.filled_ellipse(new_image, width // 2, height // 2, width // 2, height // 2, fill_color)
+        else:
+            if data.fill_state:
+                pygame.draw.ellipse(new_image, fill_color, (0, 0, width, height), 0)
+
+            if data.stroke_state:
+                pygame.draw.ellipse(new_image, stroke_color, (0, 0, width, height), stroke_weight)
+
+        # Calculating and drawing polygon to make shape
+        sorted_points = []
+
+        point_start_angle = self._get_intersection_angle_ellipse(-start_angle, width, height)
+        point_stop_angle = self._get_intersection_angle_ellipse(-stop_angle, width, height)
+
+        angle = self._get_angle_from_points(point_start_angle, point_stop_angle)
+
+        intersections = self._get_intersections_line_rect(point_start_angle, angle, width, height)
+
+        unsorted_points = []
+
+        if len(intersections) != 2:
+            return
+
+        new_angles = []
+
+        for point in intersections:
+            theta = math.degrees(math.atan2(point[1] - height//2, point[0] - width//2))
+            if theta < 0:
+                theta *= -1
+            else:
+                theta = 180 + (180 - theta)
+
+            theta = theta % 360
+            new_angles.append(theta)
+            unsorted_points.append((theta, point))
+
+        theta = math.degrees(math.atan(height / width))
+        angle_top_right = theta
+        angle_top_left = 180 - theta
+        angle_bottom_left = 180 + theta
+        angle_bottom_right = 360 - theta
+
+        start_angle = new_angles[1]
+        stop_angle = new_angles[0]
+
+        if inverted:
+            if start_angle < stop_angle:
+                start_angle, stop_angle = stop_angle, start_angle
+
+            if start_angle > angle_top_right > stop_angle:
+                unsorted_points.append((angle_top_right, (width, 0)))
+
+            if start_angle > angle_top_left > stop_angle:
+                unsorted_points.append((angle_top_left, (0, 0)))
+
+            if start_angle > angle_bottom_left > stop_angle:
+                unsorted_points.append((angle_bottom_left, (0, height)))
+
+            if start_angle > angle_bottom_right > stop_angle:
+                unsorted_points.append((angle_bottom_right, (width, height)))
+
+        else:
+            if start_angle > stop_angle:
+                start_angle, stop_angle = stop_angle, start_angle
+
+            if not (start_angle < angle_top_right < stop_angle):
+                unsorted_points.append((angle_top_right, (width, 0)))
+
+            if not (start_angle < angle_top_left < stop_angle):
+                unsorted_points.append((angle_top_left, (0, 0)))
+
+            if not (start_angle < angle_bottom_left < stop_angle):
+                unsorted_points.append((angle_bottom_left, (0, height)))
+
+            if not (start_angle < angle_bottom_right < stop_angle):
+                unsorted_points.append((angle_bottom_right, (width, height)))
+
+        unsorted_points.sort(key=self._sorting_keys)
+
+        for i in range(len(unsorted_points)):
+            sorted_points.append(unsorted_points[i][1])
+
+        pygame.draw.polygon(new_image, data.current_background_color, sorted_points, 0)
+
+        if close_edges:
+            pygame.draw.line(new_image, stroke_color, point_start_angle, point_stop_angle, stroke_weight)
+
+        new_image = pygame.transform.rotate(new_image, -data.cumulative_rotation_angle)
+
+        new_width, new_height = new_image.get_size()
+
+        new_image.set_colorkey(data.current_background_color)
+        try:
+            self.screen.blit(new_image, (int(pos_x - new_width / 2), int(pos_y - new_height / 2)))
+            # self.screen.blit(new_image, (int(pos_x), int(pos_y)))
+        except pygame.error:
+            pass
+        pass
+
+    # Other methods -----------------------------------------------------------------------------------------------
+    @staticmethod
+    def load_sound(file: str) -> pygame.mixer.Sound:
+        """
+        Creates a new pygame.mixer.Sound instance from a file
+
+        :param file: The file to load the sound from
+        :return: A created pygame.mixer.Sound instance
+        """
+        if not pygame.mixer.get_init():
+            pygame.mixer.init()
+
+        return pygame.mixer.Sound(file=file)
+
+    @staticmethod
+    def play_sound(sound: pygame.mixer.Sound, loops: int = 0, max_time: int = 0, fade_time: int = 0):
+        """
+        Plays a sound
+
+        :param sound: The sound to be played
+        :param loops: The amount of times to loop the audio
+        :param max_time: The maximum time (in ms) to play the audio
+        :param fade_time: The fading time (in ms) of the audio
+        """
+        if not pygame.mixer.get_init():
+            pygame.mixer.init()
+
+        sound.play(loops=loops, maxtime=max_time, fade_ms=fade_time)
+
+    def retrieve_frame(self) -> pygame.surface.Surface:
+        """
+        Retrieves the current frame of the simulation as a pygame Surface image.
+
+        :return: The currently drawn frame from when this method was called.
+        """
+        return self.screen
+
+    def change_icon(self, image: pygame.surface.Surface):
+        """
+        Changes icon to a user-defined image
+
+        :param image: The image to be used as icon
+        """
+        if not self.null_mode:
+            pygame.display.set_icon(image)
+
+    @staticmethod
+    def lerp_color(color_1: tuple, color_2: tuple, amount: float = 0.5) -> tuple:
+        """
+        Mixes two color to find an intermediary color between them
+
+        :param color_1: The color to lerp from
+        :param color_2: The color to lerp to
+        :param amount: How close the resulting color should be to the two colors to be mixed. 0.5 makes it an average.
+        """
+
+        iterations = 4
+        result = [0, 0, 0, 255]
+
+        if len(color_1) == 3 and len(color_2) == 3:
+            iterations = 3
+            result = [0, 0, 0]
+
+        else:
+            if len(color_1) == 3:
+                color_1 = list(color_1)
+                color_1.append(255)
+                color_1 = tuple(color_1)
+
+            if len(color_2) == 3:
+                color_2 = list(color_2)
+                color_2.append(255)
+                color_2 = tuple(color_2)
+
+        for i in range(iterations):
+            difference = color_2[i] - color_1[i]
+            difference *= amount
+            result[i] = int(color_1[i] + difference)
+
+            if result[i] < 0:
+                result[i] = 0
+
+            if result[i] > 255:
+                result[i] = 255
+
+        return tuple(result)
+
+    @staticmethod
+    def remove_icon():
+        """
+        Removes icon from window
+        """
+        new_image = pygame.surface.Surface((32, 32), flags=pygame.SRCALPHA)
+        pygame.display.set_icon(new_image)
+
+    def get_color_from_pos(self, x: int, y: int) -> tuple:
+        """
+        Retrieves the color from a given position in the current frame
+
+        :param x: The x coordinate to retrieve the color from
+        :param y: The y coordinate to retrieve the color from
+        :return: A (r,g,b,a) tuple with the color at that position
+        """
+        return tuple(self.screen.get_at((x, y)))
+
+    def is_focused(self) -> bool:
+        """
+        Gets whether the display is focused or not.
+
+        :return: True if display is focused, False if not
+        """
+        if not self.null_mode:
+            return self.focused
+
+    def set_mouse_visibility(self, visible: bool):
+        """
+        Changes the visibility of the cursor
+
+        :param visible: Whether the mouse should be visible or hidden
+        """
+        if not self.null_mode:
+            pygame.mouse.set_visible(visible)
 
     def frame_rate(self, fps: int):
         """

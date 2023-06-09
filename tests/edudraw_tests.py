@@ -5,7 +5,7 @@ import pygame.image
 from src.EduDraw import edudraw
 import time
 
-s = edudraw.EduDraw(500, 500)
+s = edudraw.EduDraw(500, 500, False)
 d = edudraw.EduDraw(250, 250, True)
 
 flag_done = False
@@ -16,12 +16,17 @@ start = time.time()
 
 antialias = False
 
+# Note: This is just a test picture, nothing special
+img = pygame.image.load(r"Image\path\goes\here")
+
 def pressed(data):
     global antialias
     antialias = not antialias
 
 
 def setup():
+    # s.frame_rate(50)
+    s.deltatime = 0
     s.set_controls(key_down=pressed)
 
 flag_has_null = False
@@ -40,6 +45,7 @@ def draw():
             s.quit()
             end = time.time()
             print(f"Test done: {str(test_null_mode)}, Elapsed time: {end - start}, Avg. FPS: {s.frame_count / (end - start)}")
+            print(f"Avg. fps for inner instance: {d.frame_count / (end - start)}")
             print("All tests done.")
             return
         else:
@@ -67,7 +73,6 @@ def dummy():
 position = [d.width/2, d.height//2]
 velocity = [3, 4]
 def inner_drawing():
-    # d.background((200, 200, 200))
     global position, velocity
     if position[0] < 0 or position[0] > d.width:
         velocity[0] *= -1
@@ -81,6 +86,9 @@ def inner_drawing():
     d.fill((255, 0, 0))
     d.stroke((0, 0, 255))
     d.circle(position[0], position[1], 5)
+
+    d.rect_mode('CENTER')
+    d.image(img, d.width // 2, s.height // 2, d.width // 2, s.height // 2, True)
 
 
 def test_rect_mode():
@@ -682,7 +690,6 @@ tests.append(test_polygon)
 # Note: This is just a test picture, nothing special
 img = pygame.image.load(r"File\path\goes\here")
 
-
 def test_image():
     global flag_done
 
@@ -698,8 +705,6 @@ def test_image():
         flag_done = True
 
 
-
-
 tests.append(test_image)
 
 
@@ -709,13 +714,143 @@ def test_null_mode():
     s.rotate(s.frame_count)
     s.rect_mode("CENTER")
     s.translate(s.width // 2, s.height // 2)
-    s.image(d.screen, 0, 0)
+    s.image(d.retrieve_frame(), 0, 0)
 
     if s.frame_count > 150:
         flag_done = True
 
 
-# tests.append(test_null_mode)
+control_points = [(100, 100), (150, 500), (450, 500), (500, 150)]
+
+
+def test_bezier():
+    global flag_done
+    s.background((255, 255, 255))
+    s.stroke((255, 0, 0))
+    s.stroke_weight(3)
+    s.bezier_curve(control_points, s.frame_count)
+
+    s.stroke((0, 0, 255))
+    s.fill((0, 0, 255))
+    for point in control_points:
+        s.circle(point[0], point[1], 5)
+
+    if s.frame_count > 150:
+        flag_done = True
+
+
+tests.append(test_bezier)
+
+
+def test_pie():
+    global flag_done
+    # This is so trippy
+    s.background((200, 200, 200))
+    s.no_fill()
+    s.rotate(s.frame_count * 1.1)
+    s.scale(1.25, 0.75)
+    s.translate(s.width//2, s.height//2)
+    s.stroke((255, 255, 255))
+    s.stroke_weight(3)
+    s.fill((255, 0, 0))
+
+    s.stroke((0, 0, 255))
+    s.arc_pie(s.frame_count + 150, s.frame_count * 2, 0, 0, s.width//2, s.height//2)
+
+    if s.frame_count > 180:
+        flag_done = True
+
+
+tests.append(test_pie)
+
+
+def test_arc_closed():
+    global flag_done
+    s.background((200, 200, 200))
+    s.no_fill()
+    s.rotate(s.frame_count * 1.1)
+    s.scale(1.25, 0.75)
+    s.translate(s.width//2, s.height//2)
+    s.stroke((255, 255, 255))
+    s.stroke_weight(3)
+    s.fill((255, 0, 0))
+
+    s.stroke((0, 0, 255))
+    s.arc_closed(s.frame_count + 150, s.frame_count * 2, 0, 0, s.width//2, s.height//2)
+
+    if s.frame_count > 180:
+        flag_done = True
+
+
+tests.append(test_arc_closed)
+
+
+def test_arc_open():
+    global flag_done
+    s.background((200, 200, 200))
+    s.no_fill()
+    s.rotate(s.frame_count * 1.1)
+    s.scale(1.25, 0.75)
+    s.translate(s.width//2, s.height//2)
+    s.stroke((255, 255, 255))
+    s.stroke_weight(3)
+    s.fill((255, 0, 0))
+
+    s.stroke((0, 0, 255))
+    s.arc_open(s.frame_count + 150, s.frame_count * 2, 0, 0, s.width//2, s.height//2)
+
+    if s.frame_count > 180:
+        flag_done = True
+
+
+tests.append(test_arc_open)
+
+
+def test_erase():
+    global flag_done
+    s.background((200, 200, 200))
+    s.fill((255, 0, 0))
+    s.circle(s.width//2, s.height//2, s.width//2)
+    s.fill((0, 0, 255))
+    s.erase()
+    s.rect(0, s.height//3, s.width, s.height//3 + 40)
+    s.no_erase()
+    s.rect(s.width//3, 0, s.width//3 + 40, s.height)
+    s.erase()
+    s.translate(90, 90)
+    s.triangle(120, 120, 180, 240, 240, 120)
+    s.no_erase()
+
+    if s.frame_count > 160:
+        flag_done = True
+
+
+tests.append(test_erase)
+
+
+def test_lerp():
+    global flag_done
+    s.stroke((255, 255, 255))
+    s.background((51, 51, 51))
+    color_a = (218, 165, 32)
+    color_b = (72, 61, 139)
+    inter_a = s.lerp_color(color_a, color_b, 0.33)
+    inter_b = s.lerp_color(color_a, color_b, 0.66)
+    s.fill(color_a)
+    s.rect(10, 20, 20, 60)
+    s.fill(inter_a)
+    s.rect(30, 20, 20, 60)
+    s.fill(inter_b)
+    s.rect(50, 20, 20, 60)
+    s.fill(color_b)
+    s.rect(70, 20, 20, 60)
+
+    if s.frame_count > 160:
+        flag_done = True
+
+
+tests.append(test_lerp)
+
 
 s.start(setup, draw, "Running tests")
 

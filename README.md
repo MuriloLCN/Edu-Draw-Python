@@ -176,7 +176,7 @@ This example was just to give you an idea of how you can work with this interfac
 
 These methods don't directly draw onto the screen, but rather control aspects of the simulation.
 
-### EduDraw(width: int, height: int, null_mode: bool = False)
+### EduDraw(width: int, height: int, null_mode: bool = False) -> EduDraw
 
 Initializer for the EduDraw class.
 
@@ -188,6 +188,7 @@ null_mode: Whether null mode should be used or not. Default: False. See more abo
 
 Returns a new instance of the EduDraw class.
 
+
 ### EduDraw.start(setup, draw, window_title: str)
 
 Starts the simulation.
@@ -198,7 +199,9 @@ setup: The setup() function written by the user
 
 draw: The draw() function written by the user
 
-window_title: A string to be used as a title for the window running the simulation. Note: This parameter is unused for null mode instances.
+window_title: A string to be used as a title for the window running the simulation. 
+Note: This parameter is unused for null mode instances.
+
 
 ### EduDraw.rect_mode(mode: str)
 
@@ -277,6 +280,7 @@ def draw():
 
 ---
 
+
 ### EduDraw.fill(color: tuple)
 
 Makes all shapes drawn after this call to be filled in with a given color.
@@ -301,9 +305,11 @@ Example:
 
 ![fill](https://user-images.githubusercontent.com/88753590/233815075-ed143b96-8cae-4f8d-ba53-338467a036d9.png)
 
+
 ### EduDraw.no_fill()
 
 Makes all shapes drawn after this call to not be filled in.
+
 
 ### EduDraw.font(new_font: str, font_size: int = 12, bold=False, italic=False, underline=False)
 
@@ -321,6 +327,7 @@ italic: Whether the font should be italic or not. Default: False
 
 underline: Whether the font should have an underline or not. Default: False
 
+
 ### EduDraw.font_from_instance(new_font: pygame.font.Font)
 
 Sets the font to be used when writing text to a premade instance of a `pygame.font.Font` object. It is recommended that, if you need to change fonts mid-drawing, you preload those fonts once before in your program and use this method to change them, instead of using the normal `font()` method, since it's costly to keep creating new instances every frame and the effect this has on performance is noticeable.
@@ -329,14 +336,17 @@ Parameters:
 
 new_font: A `pygame.font.Font` instance to be used for text.
 
+
 ### EduDraw.change_default_font(new_font: str, font_size: int = 12, bold=False, italic=False, underline=False)
 
 Changes the default font to be used. This method is meant to be called in `setup()`, and is the preferred way of changing the font.
 The parameters are the same as `font()`.
 
+
 ### EduDraw.reset_font()
 
 Resets the font used to the default one.
+
 
 ### EduDraw.stroke(color: tuple)
 
@@ -366,9 +376,11 @@ def draw():
 
 ![stroke](https://user-images.githubusercontent.com/88753590/233815081-9336437f-1eb6-41d9-81a2-15ecfcc8d0b4.png)
 
+
 ### EduDraw.no_stroke()
 
 Makes all subsequent shapes not have their outlines drawn. 
+
 
 ### EduDraw.stroke_weight(new_weight: int)
 
@@ -404,6 +416,7 @@ def draw():
 ### EduDraw.push() 
 
 Toggles the temporary state on. All color, font and weight changes made while this mode is on will be reverted once it is left.
+
 
 ### EduDraw.pop()
 
@@ -469,7 +482,6 @@ Example 2:
 ```
 
 ![pushpop2](https://user-images.githubusercontent.com/88753590/236652838-d6181f0e-9349-4437-bf7e-9cc1ae241e12.png)
-
 
 
 ### EduDraw.mouse_pos()-> tuple
@@ -617,7 +629,6 @@ def draw():
 ![advancedexample](https://user-images.githubusercontent.com/88753590/236653135-d38838d1-518c-4b70-a664-ea121cf71315.gif)
 
 
-
 ### EduDraw.scale(scale_x: float, scale_y: float) 
 
 Scales the drawing's axis by the desired multipliers
@@ -686,17 +697,21 @@ def draw():
 
 Resets all transformations applied.
 
+
 ### EduDraw.reset_scaling() 
 
 Resets all scaling transformations applied.
+
 
 ### EduDraw.reset_translation() 
 
 Resets all translation transformations applied.
 
+
 ### EduDraw.reset_rotation() 
 
 Resets all rotation transformations applied.
+
 
 ### EduDraw.set_account_for_transformations(state: bool) 
 
@@ -705,6 +720,7 @@ Changes wether `mouse_pos()` should yield the real or perceived position of the 
 Parameters:
 
 state: The state to apply to this setting. `True` yields the perceived position, whereas `False` (the default) yields the real position.
+
 
 ### EduDraw.set_controls(key_down=None, key_up=None, mouse_motion=None, mouse_button_up=None, mouse_button_down=None, mouse_wheel=None)
 
@@ -790,6 +806,36 @@ Toggles antialiasing on or off. It's off by default.
 Note: Antialiasing needs more processing, especially when the number of shapes and their complexity is higher. Also, antialised shapes do not take
 into account the stroke weight of the lines, and all lines are drawn with the weight of 1px.
 
+
+### EduDraw.erase()
+
+Makes drawings erase from the canvas instead of drawing normally. This has the same effect has
+drawing with the same colors as the background color.
+
+
+### EduDraw.no_erase()
+
+Stops erasing shapes.
+
+Example:
+
+```
+def draw():
+    s.background((200, 200, 200))
+    s.fill((255, 255, 100))
+    s.triangle(0, s.height, s.width//2, 0, s.width, s.height)
+
+    s.fill((255, 0, 0))
+    s.erase()
+    s.circle(s.width//2, s.height//2, 50)
+    s.no_erase()
+
+    s.circle(s.width//2, s.height//2 - 65, 15)
+```
+
+![erasing](https://github.com/MuriloLCN/Edu-Draw-Python/assets/88753590/64debd22-9f24-49ef-86cf-94c7b8060444)
+
+
 ## Drawing methods
 
 These methods draw onto the canvas.
@@ -801,6 +847,7 @@ Draws a point at coordinates (x,y)
 Parameters:
 
 x, y: The x,y coordinates to draw the point onto.
+
 
 ### EduDraw.text(string: str, x: int, y: int)
 
@@ -821,6 +868,7 @@ Parameters:
 
 color: A tuple containing the (R, G, B) values of the desired color.
 
+
 ### EduDraw.circle(x: int, y: int, radius: int)
 
 Draws a circle onto the screen.
@@ -830,6 +878,7 @@ Parameters:
 x, y: The coordinates of the top-left part of the rectangle that contains the circle if circle_mode is 'TOP_LEFT', or the center of the circle if circle_mode is 'CENTER'.
 
 r: The radius of the circle.
+
 
 ### EduDraw.ellipse(x: int, y: int, width: int, height: int)
 
@@ -977,7 +1026,6 @@ def draw():
 ![triangle](https://user-images.githubusercontent.com/88753590/233815214-5f44f6b7-4d0a-41f8-88f8-3b384e1d117f.png)
 
 
-
 ### EduDraw.polygon(points: list)
 
 Draws any polygon onto the screen.
@@ -1007,6 +1055,7 @@ def draw():
 
 
 ---
+
 
 ### EduDraw.image(img: pygame.surface.Surface, x: int, y: int, width: int = None, height: int = None, force_transparency: bool = False):
     
@@ -1044,6 +1093,151 @@ parameter to force that.
 ![example](https://github.com/MuriloLCN/Edu-Draw-Python/assets/88753590/c350c788-3cc4-491e-94f9-67c1a7aa8a78)
 
 
+### EduDraw.bezier_curve(self, control_points: list, num_points: int | None = None)
+
+Draws a bezier curve from a set of control points
+
+Parameters:
+
+control_points: A list of tuples containing the coordinates of the control points for the curve
+
+num_points (optional): The number of points to be used as steps for the lines. Default: 30
+
+Example:
+
+```
+control_points = [(100, 100), (150, 500), (450, 500), (500, 150)]
+
+def draw():
+    s.background((255, 255, 255))
+    s.stroke((255, 0, 0))
+    s.stroke_weight(3)
+    s.bezier_curve(control_points, 70)
+
+    # Drawing the control points for visibility
+    for point in control_points:
+        s.circle(point[0], point[1], 5)
+```
+
+
+### EduDraw.arc_open(self, start_angle: int, stop_angle: int, x: int, y: int, width: int, height: int)
+
+Draws an open arc onto the canvas.
+
+Parameters:
+
+start_angle: The starting angle (in degrees) of the arc
+
+stop_angle: The stopping angle (in degrees) of the arc
+
+x: The x coordinate to draw the arc, if circle mode is top_left, it's the top left of the rectangle
+containing the ellipse, else it's the center of the ellipse
+
+y: The y coordinate to draw the arc
+
+width: The width of the ellipse to create the arc
+
+height: The height of the ellipse to create the arc
+
+```
+def draw():
+    s.background((200, 200, 200))
+    s.stroke_weight(3)
+
+    s.fill((255, 0, 0))
+    # Circular red pie that starts at 60 degrees and ends at 300
+    s.arc_open(60, 300, s.width // 4 + 5, s.height//2, s.width//2, s.height//2)
+
+    s.fill((0, 255, 0))
+    # Elliptical green pie that starts at 300 degrees and ends at 60
+    s.arc_open(300, 60, int(s.width * 0.75) - 5, s.height//2, s.width//2, s.height)
+```
+
+![open_arcs](https://github.com/MuriloLCN/Edu-Draw-Python/assets/88753590/35c47f31-e9c9-4e57-a5e0-ab74e5dd035e)
+
+
+
+### EduDraw.arc_pie(start_angle: int, stop_angle: int, x: int, y: int, width: int, height: int, close_edges: bool = True)
+
+Draws a pie-like arc in a counter-clockwise direction from the starting angle up to the stopping angle.
+
+Parameters:
+
+start_angle: The starting angle to draw the pie
+
+stop_angle: The angle to stop the pie
+
+x: The x coordinate to draw the ellipse of the pie
+
+y: The y coordinate to draw the ellipse of the pie
+
+width: The horizontal diameter of the ellipse
+
+height: The vertical diameter of the ellipse
+
+close_edges (optional): Whether the lines from the edges of the pie should be drawn. Default: True
+
+Example:
+
+```
+def draw():
+    s.background((200, 200, 200))
+    s.stroke_weight(3)
+
+    s.fill((255, 0, 0))
+    # Circular red pie that starts at 60 degrees and ends at 300
+    s.arc_pie(60, 300, s.width // 4 + 5, s.height//2, s.width//2, s.height//2)
+
+    s.fill((0, 255, 0))
+    # Elliptical green pie that starts at 300 degrees and ends at 60
+    s.arc_pie(300, 60, int(s.width * 0.75) - 5, s.height//2, s.width//2, s.height)
+```
+
+![pie](https://github.com/MuriloLCN/Edu-Draw-Python/assets/88753590/3ace4d82-2e7f-435a-897d-cd9194ccd00c)
+
+
+### EduDraw.arc_closed(start_angle: int, stop_angle: int, x: int, y: int, width: int, height: int, close_edges: bool = True)
+
+Draws a closed arc between two angles in an ellipse
+
+Parameters: 
+
+start_angle: The starting angle of the arc
+
+stop_angle: The stopping angle of the arc
+
+x: The x coordinate to place the arc's ellipse
+
+y: The y coordinate to place the arc's ellipse
+
+width: The width of the ellipse
+
+height: The height of the ellipse
+
+close_edges (optional): Whether the edges between the starting and stopping angles should be connected.
+Default: True
+
+Example:
+
+```
+def draw():
+    s.background((200, 200, 200))
+    s.stroke_weight(3)
+
+    s.fill((255, 0, 0))
+    # Circular red arc that starts at 60 degrees and ends at 300
+    s.arc_closed(60, 300, s.width // 4 + 5, s.height//2, s.width//2, s.height//2)
+
+    s.fill((0, 255, 0))
+    # Elliptical green arc that starts at 300 degrees and ends at 60
+    s.arc_closed(300, 60, int(s.width * 0.75) - 5, s.height//2, s.width//2, s.height)
+```
+
+![arcs_closed](https://github.com/MuriloLCN/Edu-Draw-Python/assets/88753590/4d096234-b456-454e-a1a7-5c692b561555)
+
+
+## Other methods
+
 ### EduDraw.frame_rate(fps: int)
 
 Changes the framerate of the simulation. Must be called in ```setup()```.
@@ -1064,7 +1258,120 @@ If filename is empty, the name will be the frame count of when the photo was sav
 
 Quits the simulation.
 
-### Null mode
+
+### EduDraw.load_sound(file: str) -> pygame.mixer.Sound
+
+Loads a sound from a file and turns it into a `pygame.mixer.Sound` instance.
+
+Parameters:
+
+file: A string with the path to the file to be loaded
+
+Returns a new Sound class instance.
+
+
+### EduDraw.play_sound(sound: pygame.mixer.Sound, loops: int = 0, max_time: int = 0, fade_time: int = 0)
+
+Plays a loaded sound.
+
+Parameters:
+
+sound: A loaded `pygame.mixer.Sound` instance to be played.
+
+loops (optional): The amount of times to loop the audio
+
+max_time (optional): The maximum time (ms) to play the audio
+
+fade_time (optional): The fading time of the audio (in ms)
+
+
+### EduDraw.remove_icon()
+
+Removes the current icon from window
+
+
+### EduDraw.change_icon(self, image: pygame.surface.Surface)
+
+Changes icon to a user-defined image
+
+Parameters:
+
+image: The image to be used as icon
+
+
+### EduDraw.retrieve_frame() -> pygame.surface.Surface
+
+Retrieves the current frame of the simulation as a pygame Surface image.
+
+Returns the currently drawn frame from when this method was called.
+
+
+### EduDraw.lerp_color(color_1: tuple, color_2: tuple, amount: float = 0.5) -> tuple
+
+Mixes two color to find an intermediary color between them
+
+Parameters:
+
+color_1: The color to lerp from
+
+color_2: The color to lerp to
+
+amount (optional): How close the resulting color should be to the two colors to be mixed.
+Default: 0.5
+
+Example:
+
+```
+def draw():
+    s.stroke((255, 255, 255))
+    s.background((51, 51, 51))
+    color_a = (218, 165, 32)  # Starting color
+    color_b = (72, 61, 139)  # Destination color
+    inter_a = s.lerp_color(color_a, color_b, 0.33)
+    inter_b = s.lerp_color(color_a, color_b, 0.66)
+    s.fill(color_a)
+    s.rect(10, 20, 20, 60)
+    s.fill(inter_a)
+    s.rect(30, 20, 20, 60)
+    s.fill(inter_b)
+    s.rect(50, 20, 20, 60)
+    s.fill(color_b)
+    s.rect(70, 20, 20, 60)
+```
+
+![lerp_image](https://github.com/MuriloLCN/Edu-Draw-Python/assets/88753590/fa6defc4-69d5-489a-82c8-2fb6d19c2500)
+
+
+### EduDraw.get_color_from_pos(x: int, y: int) -> tuple
+
+Retrieves the color from a given position in the current frame
+
+Parameters:
+
+x: The x coordinate to retrieve the color from
+
+y: The y coordinate to retrieve the color from
+
+Returns a (r,g,b,a) tuple with the color at that position
+
+
+### EduDraw.is_focused() -> bool
+
+Gets whether the display is focused or not.
+
+Returns True if display is focused, False if not
+
+
+### EduDraw.set_mouse_visibility(visible: bool)
+
+Changes the visibility of the cursor
+
+Parameters:
+
+visible: Whether the mouse should be visible or hidden
+
+
+## Null mode
 
 Null mode is a mode in which you can run an instance of a simulation without having it running directly onto the canvas. You can do this for many reasons, including using EduDraw in a different context or application, creating multiple drawings inside of one another, among other things.
 
@@ -1136,4 +1443,3 @@ s.start(setup, draw, "My drawing :D")
 ```
 
 ![nullmode](https://github.com/MuriloLCN/Edu-Draw-Python/assets/88753590/5026c565-f081-49cf-8bfd-55fe487bada6)
-
