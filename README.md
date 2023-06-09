@@ -817,6 +817,22 @@ drawing with the same colors as the background color.
 
 Stops erasing shapes.
 
+Example:
+
+```
+def draw():
+    s.background((200, 200, 200))
+    s.fill((255, 255, 100))
+    s.triangle(0, s.height, s.width//2, 0, s.width, s.height)
+
+    s.fill((255, 0, 0))
+    s.erase()
+    s.circle(s.width//2, s.height//2, 50)
+    s.no_erase()
+
+    s.circle(s.width//2, s.height//2 - 65, 15)
+```
+
 
 ## Drawing methods
 
@@ -1085,6 +1101,22 @@ control_points: A list of tuples containing the coordinates of the control point
 
 num_points (optional): The number of points to be used as steps for the lines. Default: 30
 
+Example:
+
+```
+control_points = [(100, 100), (150, 500), (450, 500), (500, 150)]
+
+def draw():
+    s.background((255, 255, 255))
+    s.stroke((255, 0, 0))
+    s.stroke_weight(3)
+    s.bezier_curve(control_points, 70)
+
+    # Drawing the control points for visibility
+    for point in control_points:
+        s.circle(point[0], point[1], 5)
+```
+
 
 ### EduDraw.arc_open(self, start_angle: int, stop_angle: int, x: int, y: int, width: int, height: int)
 
@@ -1104,6 +1136,20 @@ y: The y coordinate to draw the arc
 width: The width of the ellipse to create the arc
 
 height: The height of the ellipse to create the arc
+
+```
+def draw():
+    s.background((200, 200, 200))
+    s.stroke_weight(3)
+
+    s.fill((255, 0, 0))
+    # Circular red pie that starts at 60 degrees and ends at 300
+    s.arc_open(60, 300, s.width // 4 + 5, s.height//2, s.width//2, s.height//2)
+
+    s.fill((0, 255, 0))
+    # Elliptical green pie that starts at 300 degrees and ends at 60
+    s.arc_open(300, 60, int(s.width * 0.75) - 5, s.height//2, s.width//2, s.height)
+```
 
 
 ### EduDraw.arc_pie(start_angle: int, stop_angle: int, x: int, y: int, width: int, height: int, close_edges: bool = True)
@@ -1126,6 +1172,22 @@ height: The vertical diameter of the ellipse
 
 close_edges (optional): Whether the lines from the edges of the pie should be drawn. Default: True
 
+Example:
+
+```
+def draw():
+    s.background((200, 200, 200))
+    s.stroke_weight(3)
+
+    s.fill((255, 0, 0))
+    # Circular red pie that starts at 60 degrees and ends at 300
+    s.arc_pie(60, 300, s.width // 4 + 5, s.height//2, s.width//2, s.height//2)
+
+    s.fill((0, 255, 0))
+    # Elliptical green pie that starts at 300 degrees and ends at 60
+    s.arc_pie(300, 60, int(s.width * 0.75) - 5, s.height//2, s.width//2, s.height)
+```
+
 
 ### EduDraw.arc_closed(start_angle: int, stop_angle: int, x: int, y: int, width: int, height: int, close_edges: bool = True)
 
@@ -1147,6 +1209,23 @@ height: The height of the ellipse
 
 close_edges (optional): Whether the edges between the starting and stopping angles should be connected.
 Default: True
+
+Example:
+
+```
+def draw():
+    s.background((200, 200, 200))
+    s.stroke_weight(3)
+
+    s.fill((255, 0, 0))
+    # Circular red arc that starts at 60 degrees and ends at 300
+    s.arc_closed(60, 300, s.width // 4 + 5, s.height//2, s.width//2, s.height//2)
+
+    s.fill((0, 255, 0))
+    # Elliptical green arc that starts at 300 degrees and ends at 60
+    s.arc_closed(300, 60, int(s.width * 0.75) - 5, s.height//2, s.width//2, s.height)
+```
+
 
 ## Other methods
 
@@ -1230,6 +1309,26 @@ color_2: The color to lerp to
 
 amount (optional): How close the resulting color should be to the two colors to be mixed.
 Default: 0.5
+
+Example:
+
+```
+def draw():
+    s.stroke((255, 255, 255))
+    s.background((51, 51, 51))
+    color_a = (218, 165, 32)  # Starting color
+    color_b = (72, 61, 139)  # Destination color
+    inter_a = s.lerp_color(color_a, color_b, 0.33)
+    inter_b = s.lerp_color(color_a, color_b, 0.66)
+    s.fill(color_a)
+    s.rect(10, 20, 20, 60)
+    s.fill(inter_a)
+    s.rect(30, 20, 20, 60)
+    s.fill(inter_b)
+    s.rect(50, 20, 20, 60)
+    s.fill(color_b)
+    s.rect(70, 20, 20, 60)
+```
 
 
 ### EduDraw.get_color_from_pos(x: int, y: int) -> tuple

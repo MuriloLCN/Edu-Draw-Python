@@ -1377,8 +1377,8 @@ class EduDraw:
             start_angle = math.radians(start_angle)
             stop_angle = math.radians(stop_angle)
 
-            pos_x -= width//2
-            pos_y -= height//2
+            # pos_x -= width//2
+            # pos_y -= height//2
 
             pygame.draw.arc(self.screen, color, (pos_x, pos_y, width, height), start_angle,
                             stop_angle, data.current_stroke_weight)
