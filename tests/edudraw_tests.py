@@ -687,6 +687,8 @@ def test_polygon():
 
 tests.append(test_polygon)
 
+# Note: This is just a test picture, nothing special
+img = pygame.image.load(r"File\path\goes\here")
 
 def test_image():
     global flag_done
