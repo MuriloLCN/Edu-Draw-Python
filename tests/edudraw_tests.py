@@ -17,7 +17,7 @@ start = time.time()
 antialias = False
 
 # Note: This is just a test picture, nothing special
-img = pygame.image.load(r"C:\Users\Murilo Luis\Desktop\logo.png")
+img = pygame.image.load(r"Image\path\goes\here")
 
 def pressed(data):
     global antialias
@@ -805,6 +805,7 @@ tests.append(test_arc_open)
 
 
 def test_erase():
+    global flag_done
     s.background((200, 200, 200))
     s.fill((255, 0, 0))
     s.circle(s.width//2, s.height//2, s.width//2)
@@ -818,8 +819,36 @@ def test_erase():
     s.triangle(120, 120, 180, 240, 240, 120)
     s.no_erase()
 
+    if s.frame_count > 160:
+        flag_done = True
+
 
 tests.append(test_erase)
+
+
+def test_lerp():
+    global flag_done
+    s.stroke((255, 255, 255))
+    s.background((51, 51, 51))
+    color_a = (218, 165, 32)
+    color_b = (72, 61, 139)
+    inter_a = s.lerp_color(color_a, color_b, 0.33)
+    inter_b = s.lerp_color(color_a, color_b, 0.66)
+    s.fill(color_a)
+    s.rect(10, 20, 20, 60)
+    s.fill(inter_a)
+    s.rect(30, 20, 20, 60)
+    s.fill(inter_b)
+    s.rect(50, 20, 20, 60)
+    s.fill(color_b)
+    s.rect(70, 20, 20, 60)
+
+    if s.frame_count > 160:
+        flag_done = True
+
+
+tests.append(test_lerp)
+
 
 s.start(setup, draw, "Running tests")
 

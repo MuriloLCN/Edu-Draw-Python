@@ -136,25 +136,6 @@ class _ControlClass:
 
 
 class EduDraw:
-    """
-TODO List:
-    - Done
-        - Added sounds
-        - Added icon removal + icon changing
-        - Added focused window
-        - Added retrieve color from position
-        - Add bezier curves
-        - Added hide cursor
-        - Added retrieve image
-        - Added lerp color
-        - Added open arcs
-        - Added pie arcs
-        - Added closed arcs
-        - Added erase & no erase
-    - Not Done
-        - Big update for documentation
-    """
-
     def __init__(self, width: int, height: int, null_mode: bool = False):
         global _instance_handler
         self.width = width
@@ -628,6 +609,14 @@ TODO List:
 
     @staticmethod
     def _get_intersections_line_rect(point: tuple, angle: int, width: int, height: int) -> list:
+        """
+        Finds the intersections between a line given by a point and an angle with the four line defining a rectangle.
+
+        :param point: The known point
+        :param angle: The angle the line forms
+        :param width: The width of the rect
+        :param height: The height of the rect
+        """
         if angle == 90 or angle == 270:
             return [(point[0], 0), (point[0], height)]
         if angle == 0 or angle == 180:
@@ -664,6 +653,33 @@ TODO List:
             points.append(point_right)
 
         return points
+
+    @staticmethod
+    def _get_angle_from_points(p1: tuple, p2: tuple) -> int:
+        """
+        Retrieves angle from two points.
+
+        :param p1: The first point
+        :param p2: The second point
+        :return: The angle (in degrees)
+        """
+        if p1[0] == p2[0]:
+            if p2[1] > p1[0]:
+                return 90
+            else:
+                return 270
+        if p1[1] == p2[1]:
+            if p2[0] > p1[0]:
+                return 0
+            else:
+                return 180
+
+        dy = p2[1] - p1[1]
+        dx = p2[0] - p1[0]
+
+        angle = int(math.degrees(math.atan(dy / dx)))
+
+        return angle
 
     # State methods --------------------------------------------------------------------------------------
 
@@ -1509,28 +1525,19 @@ TODO List:
         except pygame.error:
             pass
 
-    @staticmethod
-    def _get_angle_from_points(p1: tuple, p2: tuple) -> int:
-        if p1[0] == p2[0]:
-            if p2[1] > p1[0]:
-                return 90
-            else:
-                return 270
-        if p1[1] == p2[1]:
-            if p2[0] > p1[0]:
-                return 0
-            else:
-                return 180
-
-        dy = p2[1] - p1[1]
-        dx = p2[0] - p1[0]
-
-        angle = int(math.degrees(math.atan(dy/dx)))
-
-        return angle
-
     def arc_closed(self, start_angle: int, stop_angle: int, x: int, y: int, width: int, height: int,
                    close_edges: bool = True):
+        """
+        Draws a closed arc between two angles in an ellipse
+
+        :param start_angle: The starting angle of the arc
+        :param stop_angle: The stopping angle of the arc
+        :param x: The x coordinate to place the arc's ellipse
+        :param y: The y coordinate to place the arc's ellipse
+        :param width: The width of the ellipse
+        :param height: The height of the ellipse
+        :param close_edges: Whether the edges between the starting and stopping angles should be connected
+        """
 
         if abs(start_angle) >= 360:
             start_angle = start_angle % 360
