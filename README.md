@@ -833,6 +833,8 @@ def draw():
     s.circle(s.width//2, s.height//2 - 65, 15)
 ```
 
+![erasing](https://github.com/MuriloLCN/Edu-Draw-Python/assets/88753590/64debd22-9f24-49ef-86cf-94c7b8060444)
+
 
 ## Drawing methods
 
@@ -1151,6 +1153,9 @@ def draw():
     s.arc_open(300, 60, int(s.width * 0.75) - 5, s.height//2, s.width//2, s.height)
 ```
 
+![open_arcs](https://github.com/MuriloLCN/Edu-Draw-Python/assets/88753590/35c47f31-e9c9-4e57-a5e0-ab74e5dd035e)
+
+
 
 ### EduDraw.arc_pie(start_angle: int, stop_angle: int, x: int, y: int, width: int, height: int, close_edges: bool = True)
 
@@ -1187,6 +1192,8 @@ def draw():
     # Elliptical green pie that starts at 300 degrees and ends at 60
     s.arc_pie(300, 60, int(s.width * 0.75) - 5, s.height//2, s.width//2, s.height)
 ```
+
+![pie](https://github.com/MuriloLCN/Edu-Draw-Python/assets/88753590/3ace4d82-2e7f-435a-897d-cd9194ccd00c)
 
 
 ### EduDraw.arc_closed(start_angle: int, stop_angle: int, x: int, y: int, width: int, height: int, close_edges: bool = True)
@@ -1225,6 +1232,8 @@ def draw():
     # Elliptical green arc that starts at 300 degrees and ends at 60
     s.arc_closed(300, 60, int(s.width * 0.75) - 5, s.height//2, s.width//2, s.height)
 ```
+
+![arcs_closed](https://github.com/MuriloLCN/Edu-Draw-Python/assets/88753590/4d096234-b456-454e-a1a7-5c692b561555)
 
 
 ## Other methods
@@ -1329,6 +1338,8 @@ def draw():
     s.fill(color_b)
     s.rect(70, 20, 20, 60)
 ```
+
+![lerp_image](https://github.com/MuriloLCN/Edu-Draw-Python/assets/88753590/fa6defc4-69d5-489a-82c8-2fb6d19c2500)
 
 
 ### EduDraw.get_color_from_pos(x: int, y: int) -> tuple
