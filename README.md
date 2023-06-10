@@ -8,6 +8,132 @@ The general design of the interface is heavily (if not all) inspired by the [P5.
 
 The details of installation and documentation of the respective versions are below. 
 
+## Summary
+
+* 1.0. [Installation](#installation)
+
+* 2.0. [Setting up](#setting-up) 
+
+* 3.0. [Documentation](#documentation)
+
+  * 3.1. [State methods](#state-methods)  
+    
+    * 3.1.1. [EduDraw()](#edudrawwidth-int-height-int-null_mode-bool--false---edudraw)
+    
+    * 3.1.2. [EduDraw.start()](#edudrawstartsetup-draw-window_title-str)
+
+    * 3.1.3. [EduDraw.rect_mode()](#edudrawrect_modemode-str)
+  
+    * 3.1.4. [EduDraw.circle_mode()](#edudrawcircle_modemode-str)
+
+    * 3.1.5. [EduDraw.fill()](#edudrawfillcolor-tuple)
+
+    * 3.1.6. [EduDraw.no_fill()](#edudrawno_fill)
+
+    * 3.1.7. [EduDraw.font()](#edudrawfontnew_font-str-font_size-int--12-boldfalse-italicfalse-underlinefalse)
+
+    * 3.1.8. [EduDraw.font_from_instance()](#edudrawfont_from_instancenew_font-pygamefontfont)
+
+    * 3.1.9. [EduDraw.change_default_font()](#edudrawchange_default_fontnew_font-str-font_size-int--12-boldfalse-italicfalse-underlinefalse)
+
+    * 3.1.10. [EduDraw.reset_font()](#edudrawreset_font)
+
+    * 3.1.11. [EduDraw.stroke()](#edudrawstrokecolor-tuple)
+
+    * 3.1.12. [EduDraw.no_stroke()](#edudrawno_stroke)
+
+    * 3.1.13. [EduDraw.stroke_weight()](#edudrawstroke_weightnew_weight-int)
+
+    * 3.1.14. [EduDraw.push()](#edudrawpush)
+
+    * 3.1.15. [EduDraw.pop()](#edudrawpop)
+
+    * 3.1.16. [EduDraw.mouse_pos()](#edudrawmouse_pos--tuple)
+
+    * 3.1.17. [EduDraw.rotate()](#edudrawrotateangle-int)
+
+    * 3.1.18. [EduDraw.scale()](#edudrawscalescale_x-float-scale_y-float)
+
+    * 3.1.19. [EduDraw.translate()](#edudrawtranslatetranslate_x-int-translate_y-int)
+
+    * 3.1.20. [EduDraw.reset_transformations()](#edudrawreset_transformations)
+
+    * 3.1.21. [EduDraw.reset_scaling()](#edudrawreset_scaling)
+
+    * 3.1.22. [EduDraw.reset_translation()](#edudrawreset_translation)
+
+    * 3.1.23. [EduDraw.reset_rotation()](#edudrawreset_rotation)
+
+    * 3.1.24. [EduDraw.set_account_for_transformations()](#edudrawset_account_for_transformationsstate-bool)
+
+    * 3.1.25. [EduDraw.set_controls()](#edudrawset_controlskey_downnone-key_upnone-mouse_motionnone-mouse_button_upnone-mouse_button_downnone-mouse_wheelnone)
+
+    * 3.1.26. [EduDraw.toggle_antialiasing()](#edudrawtoggle_antialiasing)
+
+    * 3.1.27. [EduDraw.erase()](#edudrawerase)
+
+    * 3.1.28. [EduDraw.no_erase()](#edudrawno_erase)
+
+  * 3.2. [Drawing methods](#drawing-methods)
+
+     * 3.2.1. [EduDraw.point()](#edudrawpointx-int-y-int)
+
+     * 3.2.2. [EduDraw.text()](#edudrawtextstring-str-x-int-y-int)
+
+     * 3.2.3. [EduDraw.background()](#edudrawbackgroundcolor-tuple)
+
+     * 3.2.4. [EduDraw.circle()](#edudrawcirclex-int-y-int-radius-int)
+    
+     * 3.2.5. [EduDraw.ellipse()](#edudrawellipsex-int-y-int-width-int-height-int)
+
+     * 3.2.6. [EduDraw.line()](#edudrawlinex1-int-y1-int-x2-int-y2-int)
+
+     * 3.2.7. [EduDraw.rect()](#edudrawrectx-int-y-int-width-int-height-int)
+
+     * 3.2.8. [EduDraw.square()](#edudrawsquarex-int-y-int-side_size-int)
+
+     * 3.2.9. [EduDraw.triangle()](#edudrawtrianglex1-int-y1-int-x2-int-y2-int-x3-int-y3-int)
+
+     * 3.2.10. [EduDraw.polygon()](#edudrawpolygonpoints-list)
+
+     * 3.2.11. [EduDraw.image()](#edudrawimageimg-pygamesurfacesurface-x-int-y-int-width-int--none-height-int--none-force_transparency-bool--false)
+
+     * 3.2.12. [EduDraw.bezier_curve()](#edudrawbezier_curveself-control_points-list-num_points-int--none--none)
+
+     * 3.2.13. [EduDraw.arc_open()](#edudrawarc_openself-start_angle-int-stop_angle-int-x-int-y-int-width-int-height-int)
+
+     * 3.2.14. [EduDraw.arc_pie()](#edudrawarc_piestart_angle-int-stop_angle-int-x-int-y-int-width-int-height-int-close_edges-bool--true)
+
+     * 3.2.15. [EduDraw.arc_closed()](#edudrawarc_closedstart_angle-int-stop_angle-int-x-int-y-int-width-int-height-int-close_edges-bool--true)
+
+   * 3.3. [Other methods](#other-methods)
+
+     * 3.3.1. [EduDraw.frame_rate()](#edudrawframe_ratefps-int)
+
+     * 3.3.2. [EduDraw.save()](#edudrawsavefilename-str)
+
+     * 3.3.3. [EduDraw.quit()](#edudrawquit)
+
+     * 3.3.4. [EduDraw.load_sound()](#edudrawload_soundfile-str---pygamemixersound)
+
+     * 3.3.5. [EduDraw.play_sound()](#edudrawplay_soundsound-pygamemixersound-loops-int--0-max_time-int--0-fade_time-int--0)
+
+     * 3.3.6. [EduDraw.remove_icon()](#edudrawremove_icon)
+
+     * 3.3.7. [EduDraw.change_icon()](#edudrawchange_iconself-image-pygamesurfacesurface)
+
+     * 3.3.8. [EduDraw.retrieve_frame()](#edudrawretrieve_frame---pygamesurfacesurface)
+
+     * 3.3.9. [EduDraw.lerp_color()](#edudrawlerp_colorcolor_1-tuple-color_2-tuple-amount-float--05---tuple)
+
+     * 3.3.10. [EduDraw.get_color_from_pos()](#edudrawget_color_from_posx-int-y-int---tuple)
+
+     * 3.3.11. [EduDraw.is_focused()](#edudrawis_focused---bool)
+
+     * 3.3.12. [EduDraw.set_mouse_visibility()](#edudrawset_mouse_visibilityvisible-bool)
+
+     3.4. [Null mode](#null-mode)
+  
 ## Installation
 
 You can install the package using PIP by typing the following command: `pip install edudraw`, and import it in your code like any other library.
@@ -799,7 +925,7 @@ def get_char(data: dict):
 ![keyexample](https://github.com/MuriloLCN/Edu-Draw-Python/assets/88753590/ddb1a44e-77a0-46f3-bf10-fff2d76989ec)
 
 
-### EduDraw.toggle_antialising()
+### EduDraw.toggle_antialiasing()
 
 Toggles antialiasing on or off. It's off by default.
 
@@ -1118,6 +1244,8 @@ def draw():
     for point in control_points:
         s.circle(point[0], point[1], 5)
 ```
+
+![bezier_image](https://github.com/MuriloLCN/Edu-Draw-Python/assets/88753590/0d1d01dd-17f1-45cc-bdaa-15f9a9fa0293)
 
 
 ### EduDraw.arc_open(self, start_angle: int, stop_angle: int, x: int, y: int, width: int, height: int)
