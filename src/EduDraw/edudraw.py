@@ -55,6 +55,9 @@ class _RepeatTimer:
     def quit(self):
         self.flag = True
 
+    def change_interval(self, new_deltatime: int):
+        self.interval = new_deltatime / 1000
+
 
 class _SimulationData:
     """
@@ -141,7 +144,7 @@ class EduDraw:
         self.width = width
         self.height = height
 
-        self.timeloop = None
+        self.timeloop: None | _RepeatTimer = None
         self.deltatime = 1
 
         self.null_mode = null_mode
@@ -1796,7 +1799,24 @@ class EduDraw:
         Sets the desired frame rate. Note that EduDraw using python is slower than it's C# counterpart.
         :param fps: The desired FPS rate.
         """
+
+        if fps == 0:
+            return
+
         self.deltatime = 1000 / fps
+
+        if self.timeloop is not None:
+            self.timeloop.change_interval(int(self.deltatime))
+
+    def use_max_frame_rate(self):
+        """
+        Changes the inner time between frames to zero, the frame rate is determined by computation speed and may vary
+        """
+
+        self.deltatime = 0
+
+        if self.timeloop is not None:
+            self.timeloop.interval = 0
 
     def save(self, filename: str):
         """

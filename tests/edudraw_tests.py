@@ -19,6 +19,7 @@ antialias = False
 # Note: This is just a test picture, nothing special
 img = pygame.image.load(r"Image\path\goes\here")
 
+
 def pressed(data):
     global antialias
     antialias = not antialias
@@ -29,7 +30,9 @@ def setup():
     s.deltatime = 0
     s.set_controls(key_down=pressed)
 
+
 flag_has_null = False
+
 
 def draw():
     global flag_done, start, end, flag_has_null
@@ -44,7 +47,8 @@ def draw():
         if flag_done:
             s.quit()
             end = time.time()
-            print(f"Test done: {str(test_null_mode)}, Elapsed time: {end - start}, Avg. FPS: {s.frame_count / (end - start)}")
+            print(f"Test done: {str(test_null_mode)}, Elapsed time: {end - start}, "
+                  f"Avg. FPS: {s.frame_count / (end - start)}")
             print(f"Avg. fps for inner instance: {d.frame_count / (end - start)}")
             print("All tests done.")
             return
@@ -70,8 +74,11 @@ def draw():
 def dummy():
     pass
 
+
 position = [d.width/2, d.height//2]
 velocity = [3, 4]
+
+
 def inner_drawing():
     global position, velocity
     if position[0] < 0 or position[0] > d.width:
@@ -687,8 +694,6 @@ def test_polygon():
 
 tests.append(test_polygon)
 
-# Note: This is just a test picture, nothing special
-img = pygame.image.load(r"File\path\goes\here")
 
 def test_image():
     global flag_done
@@ -852,5 +857,21 @@ def test_lerp():
 tests.append(test_lerp)
 
 
-s.start(setup, draw, "Running tests")
+def test_framerate():
+    global flag_done
+    s.background((255, 255, 255))
+    s.fill((255, 0, 0))
 
+    s.frame_rate(s.frame_count % 100)
+
+    s.circle(s.frame_count % s.width, s.height//2, 25)
+
+    if s.frame_count > 100:
+        s.use_max_frame_rate()
+        flag_done = True
+
+
+tests.append(test_framerate)
+
+
+s.start(setup, draw, "Running tests")
