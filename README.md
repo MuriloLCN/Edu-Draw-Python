@@ -109,7 +109,7 @@ The details of installation and documentation of the respective versions are bel
    * 3.3. [Other methods](#other-methods)
 
      * 3.3.1. [EduDraw.frame_rate()](#edudrawframe_ratefps-int)
-     
+
      * 3.3.2. [EduDraw.use_max_frame_rate()](#edudrawuse_max_frame_rate)
 
      * 3.3.3. [EduDraw.save()](#edudrawsavefilename-str)
